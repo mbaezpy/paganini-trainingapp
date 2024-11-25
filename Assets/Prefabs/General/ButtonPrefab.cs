@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class ButtonPrefab : MonoBehaviour
+public class ButtonPrefabX : MonoBehaviour
 {
     public Button ButtonObject;
     //public GameObject ButtonLabel;

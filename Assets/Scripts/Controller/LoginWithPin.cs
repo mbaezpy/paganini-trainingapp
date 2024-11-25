@@ -8,8 +8,9 @@ using UnityEngine.Events;
 
 public class LoginWithPin : MonoBehaviour
 {
-    public GameObject textinput;
-    public Button LoginButton;
+    public TMP_InputField textinput;
+    public ButtonPrefab LoginButton;
+    public GameObject ErrorMessage;
     public UnityEvent OnLoginSucceed;
     public UnityEvent OnLoginFail;
 
@@ -18,11 +19,17 @@ public class LoginWithPin : MonoBehaviour
         DBConnector.Instance.Startup();
     }
 
+    void Start()
+    {
+        ErrorMessage.SetActive(false);
+    }
+
     public void SendPinToAPI()
     {
-        LoginButton.interactable = false;
+        LoginButton.RenderBusyState(true);
+        ErrorMessage.SetActive(false);
 
-        int pin = System.Int32.Parse(textinput.GetComponent<TMP_InputField>().text);
+        int pin = System.Int32.Parse(textinput.text);
         PaganiniRestAPI.User.Authenticate(pin, GetAuthSucceed, GetAuthFailed);
     }
 
@@ -57,17 +64,27 @@ public class LoginWithPin : MonoBehaviour
     private void GetAuthFailed(string errorMessage)
     {
         Debug.LogError(errorMessage);
-        LoginButton.interactable = true;
-
-        Assets.ErrorHandlerSingleton.GetErrorHandler().AddNewError("AuthFailed", errorMessage);
+        ErrorMessage.SetActive(true);
+        LoginButton.RenderBusyState(false);        
 
         OnLoginFail.Invoke();
     }
 
-    private void GetUserProfileSucceed(UserAPI userApi)
+    private void GetUserProfileSucceed(IUserAPI userApi)
     {
+        ErrorMessage.SetActive(false);
 
-        var user = new User(userApi);
+        var list = User.GetAll( u => u.Id == userApi.user_id);
+
+        User user = new User(userApi);
+
+        // Keep the local copy if there is one
+        if (list.Capacity > 0)
+        {
+            user.AppName = list[0].AppName;  
+            user.ProfilePic = list[0].ProfilePic;  
+            user.IsDirty = true;        
+        }
         user.Insert();
 
         AppState.CurrentUser = user;
@@ -77,9 +94,7 @@ public class LoginWithPin : MonoBehaviour
 
     private void GetUserProfileFailed(string errorMessage)
     {
-        Debug.LogError(errorMessage);
-        LoginButton.interactable = true;        
-
+        Debug.LogError(errorMessage);              
         //Assets.ErrorHandlerSingleton.GetErrorHandler().AddNewError("AuthFailed", errorMessage);
 
         OnLoginFail.Invoke();

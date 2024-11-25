@@ -37,15 +37,22 @@ public class LoginManager : MonoBehaviour
 
     }
 
+    /// <summary>
+    /// Logs out the user.
+    /// </summary>
     public void Logout()
     {
         //DBConnector.Instance.TruncateTable<User>();
 
         AppState.CurrentUser = null;
-        User.DeleteAll();
+        AppState.CurrentSocialWorker = null;
+        User.DeleteNonDirtyCopies();
         AuthToken.DeleteAll();
     }
 
+    /// <summary>
+    /// Checks if there is an AuthToken, and try to continue with the user sign in.
+    /// </summary>
     private void CheckAuthToken()
     {
         var list = AuthToken.GetAll();
@@ -66,11 +73,11 @@ public class LoginManager : MonoBehaviour
         {
             LoginStatusNextAction();
         }
-
-
     }
 
-
+    /// <summary>
+    /// Continue the user sign in, raising the events accordingly.
+    /// </summary>
     private void LoginStatusNextAction()
     {
         if (AppState.CurrentUser == null)
@@ -89,13 +96,18 @@ public class LoginManager : MonoBehaviour
 
     }
 
-
+    /// <summary>
+    /// Sends the credentials to the API.
+    /// </summary>
     public void ContinueUserSignIn()
     {
         PaganiniRestAPI.User.GetProfile(GetUserProfileSucceed, GetUserProfileFailed);
     }
 
-    private void GetUserProfileSucceed(UserAPI userApi)
+    /// <summary>
+    /// Request was successful
+    /// </summary>
+    private void GetUserProfileSucceed(IUserAPI userApi)
     {        
         var list = User.GetAll( u => u.Id == userApi.user_id);
 
@@ -104,7 +116,9 @@ public class LoginManager : MonoBehaviour
         // Keep the local copy if there is one
         if (list.Capacity > 0)
         {
-            user.AppName = list[0].AppName;            
+            user.AppName = list[0].AppName;  
+            user.ProfilePic = list[0].ProfilePic;  
+            user.IsDirty = true;        
         }
         user.Insert();
 
@@ -113,16 +127,17 @@ public class LoginManager : MonoBehaviour
         LoginStatusNextAction();
     }
 
+    /// <summary>
+    /// There were some problems with request.
+    /// </summary>
+    /// <param name="errorMessage"></param>
     private void GetUserProfileFailed(string errorMessage)
     {
         Debug.Log("Error getting Profile: " + errorMessage);
 
-        AppState.CurrentUser = null;
+        AppState.CurrentUser = null;        
         AppState.APIToken = null;
         LoginStatusNextAction();
     }
-
-
-
 
 }

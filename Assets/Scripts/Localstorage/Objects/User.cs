@@ -20,7 +20,6 @@ public class User : BaseModel<User>
     [Ignore]
     public Workshop AtWorkshop { set; get; }
 
-
     public override string ToString()
     {
         return string.Format("[User: user_id={0}, user_mnemonic_token={1}, user_username={2}, app_name={8}, user_apitoken={3}, user_righthanded={4}, user_canread={5}, user_activatetts={6}, user_vibration={7}]", Id, Mnemonic_token, Username, Apitoken, Righthanded, Canread, Activatetts, Vibration, AppName);
@@ -43,7 +42,9 @@ public class User : BaseModel<User>
         {
             AtWorkshop = new Workshop(profil.user_workshop);
             WorkshopId = AtWorkshop.Id;        
-        }        
+        }     
+
+        this.FromAPI = true;   
     }
 
     public UserAPI ToAPI()
@@ -60,6 +61,9 @@ public class User : BaseModel<User>
             user_vibration = this.Vibration,
             user_contact = this.Contact
         };
+
+        user.IsNew = !FromAPI;
+
         return user;
     }
 

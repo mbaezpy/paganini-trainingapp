@@ -33,7 +33,7 @@ public static class AppState
 
 
     // Social Worker info
-    public static SocialWorker CurrenSocialWorker = null;
+    public static SocialWorker CurrentSocialWorker = null;
     public static string SWAPIToken = null;
 
     public static class Training

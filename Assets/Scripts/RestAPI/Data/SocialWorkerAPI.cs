@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Newtonsoft.Json;
 public interface ISocialWorkerAPI
 {
@@ -16,7 +17,7 @@ public class SocialWorkerAPIBase : BaseAPI
     public string socialw_username { get; set; }
     public string socialw_firstname { get; set; }
     public string socialw_sirname { get; set; }
-    public string socialw_photo { get; set; }
+    //public string socialw_photo { get; set; }
 }
 
 
@@ -28,6 +29,9 @@ public class SocialWorkerAPI : SocialWorkerAPIBase, ISocialWorkerAPI
 
     [JsonIgnore]
     public WorkshopAPI socialw_workshop { get; set; }
+
+    [JsonProperty]
+    public string socialw_photo { get; set; }
 }
 
 [System.Serializable]
@@ -38,6 +42,12 @@ public class SocialWorkerAPIUpdate : SocialWorkerAPIBase, ISocialWorkerAPI
 
     [JsonIgnore]
     public WorkshopAPI socialw_workshop { get; set; }
+
+    [JsonIgnore]
+    public Dictionary<string, byte[]> files;    
+
+    [JsonIgnore]
+    public string socialw_photo { get; set; }
 }
 
 [System.Serializable]
@@ -48,6 +58,9 @@ public class SocialWorkerAPIResult : SocialWorkerAPIBase, ISocialWorkerAPI
 
     [JsonProperty]
     public WorkshopAPI socialw_workshop { get; set; }
+
+    [JsonProperty]
+    public string socialw_photo { get; set; }    
 }
 
 [System.Serializable]

@@ -24,17 +24,9 @@ public class LoginSocialWorker : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        //if (AppState.SWAPIToken != null && AppState.SWAPIToken.Trim() != "")
-        //{
-        //    PaganiniRestAPI.SocialWorker.GetProfile(GetProfileSucceed, VerifyExistingAuthFailed);
-        //}
-        //else
-        //{
-        //    OnNotLoggedIn?.Invoke();
-        //}
 
         // We do not check the credentials again
-        if (AppState.SWAPIToken != null && AppState.CurrenSocialWorker != null)
+        if (AppState.SWAPIToken != null && AppState.CurrentSocialWorker != null)
         {
             OnLoginSucceed?.Invoke();
         } else
@@ -43,6 +35,9 @@ public class LoginSocialWorker : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Sends the credentials to the API.
+    /// </summary>
     public void SendCredentialsToAPI()
     {
         ErrorMessage?.SetActive(false);
@@ -53,19 +48,29 @@ public class LoginSocialWorker : MonoBehaviour
                                                   GetAuthSucceed, GetAuthFailed);
     }
 
+    public void LogoutSocialWorker()
+    {
+        AppState.SWAPIToken = null;
+        AppState.CurrentSocialWorker = null;
+    }
+
     /// <summary>
     /// Request was successful
     /// </summary>
-    /// <param String authtoken</param>
+    /// <param name="token">AuthTokenAPI</param>
     private void GetAuthSucceed(AuthTokenAPI token)
     {
         AppState.SWAPIToken = token.apitoken;
         PaganiniRestAPI.SocialWorker.GetProfile(GetProfileSucceed, GetAuthFailed);  
     }
 
+    /// <summary>
+    /// Request was successful
+    /// </summary>
+    /// <param name="profile">SocialWorkerAPIResult</param>
     private void GetProfileSucceed(SocialWorkerAPIResult profile)
     {
-        AppState.CurrenSocialWorker = new SocialWorker(profile);
+        AppState.CurrentSocialWorker = new SocialWorker(profile);
         OnLoginSucceed?.Invoke();
     }
 
@@ -78,8 +83,6 @@ public class LoginSocialWorker : MonoBehaviour
         Debug.LogError(errorMessage);
         LoginButton.RenderBusyState(false);
         ErrorMessage.SetActive(true);
-
-        Assets.ErrorHandlerSingleton.GetErrorHandler().AddNewError("AuthFailed", errorMessage);
 
         OnLoginFail.Invoke();
     }

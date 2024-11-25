@@ -1,6 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
 using SQLite4Unity3d;
-using UnityEngine.Profiling;
 
 public class SocialWorker : BaseModel<SocialWorker>
 {
@@ -32,9 +32,9 @@ public class SocialWorker : BaseModel<SocialWorker>
         ProfilePic = PictureUtils.ConvertBase64ToByteArray(profile.socialw_photo);
     }
 
-    public SocialWorkerAPI ToAPI()
+    public SocialWorkerAPIUpdate ToAPIUpdate()
     {
-        SocialWorkerAPI user = new SocialWorkerAPI
+        SocialWorkerAPIUpdate user = new SocialWorkerAPIUpdate
         {
             socialw_id = Id,
             socialw_username = Username,
@@ -42,10 +42,14 @@ public class SocialWorker : BaseModel<SocialWorker>
             socialw_sirname = Surname
         };
 
-        user.socialw_photo = PictureUtils.ConvertByteArrayToBase64(ProfilePic);
+        user.files = new Dictionary<string, byte[]>();
+        user.files.Add("socialw_photo", ProfilePic);
 
         return user;
     }
 
-
+    public object Clone()
+    {
+        return this.MemberwiseClone();
+    }
 }

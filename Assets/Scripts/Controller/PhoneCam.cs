@@ -285,7 +285,7 @@ public class PhoneCam : MonoBehaviour
                 microphoneSource.mute = audioInput == null;
                 AppState.recording = true;
 
-                CurrentRoute.SocialWorkerId = AppState.CurrenSocialWorker.Id;
+                CurrentRoute.SocialWorkerId = AppState.CurrentSocialWorker.Id;
                 CurrentRoute.StartTimestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
                 CurrentRoute.LocalVideoResolution = $"{webCamTexture.requestedWidth}x{webCamTexture.requestedHeight}:{webCamTexture.width}x{webCamTexture.height}";
                 CurrentRoute.InsertDirty();

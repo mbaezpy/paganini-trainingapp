@@ -119,7 +119,7 @@ public class PaganiniRestAPI
             RESTAPI.Instance.Get<AuthTokenAPI>(Path.Authenticate, successCallback, errorCallback, headers);
         }
 
-        public static void GetProfile(UnityAction<UserAPI> successCallback, UnityAction<string> errorCallback)
+        public static void GetProfile(UnityAction<UserAPIResult> successCallback, UnityAction<string> errorCallback)
         {
             Dictionary<string, string> headers = new Dictionary<string, string>
             {
@@ -128,7 +128,7 @@ public class PaganiniRestAPI
 
             string url = Path.UsrProfile;
 
-            RESTAPI.Instance.Get<UserAPI>(url, successCallback, errorCallback, headers);
+            RESTAPI.Instance.Get<UserAPIResult>(url, successCallback, errorCallback, headers);
         }
 
     }

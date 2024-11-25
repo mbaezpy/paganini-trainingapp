@@ -29,7 +29,11 @@ public class RouteTrainingDataHandler : MonoBehaviour
     void Start()
     {
         WayListHandler = WayListView.GetComponent<WayList>();
-        AppState.SelectedWeg = -1;        
+        AppState.SelectedWeg = -1;   
+        if (AppState.CurrentUser != null)
+        {
+            GreetingText.text = GreetingText.text.Replace("{0}", AppState.CurrentUser.AppName); 
+        }            
     }
 
     public void LoadRouteTrainings()

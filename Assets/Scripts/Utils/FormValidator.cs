@@ -127,4 +127,12 @@ public class FormValidator : MonoBehaviour
             item.ClearField();
         }
     }
+
+    void OnDestroy()
+    {
+        SubmitButton.onClick.RemoveListener( HandleSubmission );
+        if (SkipButton) {
+            SkipButton.onClick.RemoveListener(HandleSkip);
+        }
+    }
 }
