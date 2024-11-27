@@ -25,6 +25,10 @@ public class WayItem : MonoBehaviour
     public LandmarkIcon destinationLandmark;
     public RawImage DestinationPhoto;
 
+    [Header(@"Route")]
+    public TMPro.TMP_Text routeName;
+    public TMPro.TMP_Text recordingDate;
+
     [Header(@"Other")]
     public Button selectionButton;
     public GameObject LoadingPanel;
@@ -59,10 +63,12 @@ public class WayItem : MonoBehaviour
         if (CardPanel != null) CardPanel?.SetActive(!doRender);
     }
 
-    public void FillWayItem(Way w)
+    public void FillWayItem(Way w, Route route)
     {
-        if (startName!= null) startName.text = w.Start;
-        if (destinationName != null) destinationName.text = w.Destination;
+        if (routeName) = ToCapitalFirst(w.Destination);
+
+        if (startName!= null) startName.text = ToCapitalFirst(w.Start);;
+        if (destinationName != null) destinationName.text = ToCapitalFirst(w.Destination);
 
         startLandmark?.SetSelectedLandmark(Int32.Parse(w.StartType)); //selectedLandmarkType = (LandmarkIcon.LandmarkType) Int32.Parse(w.StartType);
         destinationLandmark?.SetSelectedLandmark(Int32.Parse(w.DestinationType)); //(LandmarkIcon.LandmarkType)Int32.Parse(w.DestinationType);
@@ -72,7 +78,7 @@ public class WayItem : MonoBehaviour
 
     public void FillWayDestination(Way w, Route route)
     {
-        var fmtName = char.ToUpper(w.Destination[0]) + w.Destination.Substring(1);
+        var fmtName = ToCapitalFirst(w.Destination);
         //destinationName.text = destinationName.text.Replace("{0}", fmtName);
         destinationName.text =  fmtName;
         destinationLandmark?.SetSelectedLandmark(Int32.Parse(w.DestinationType)); //(LandmarkIcon.LandmarkType)Int32.Parse(w.DestinationType);
@@ -83,6 +89,11 @@ public class WayItem : MonoBehaviour
         this.way = w;
 
         RenderLoading(false);
+    }
+
+    private string ToCapitalFirst(string text){
+        if (text == null || text.Trim() == "") return text;
+        return char.ToUpper(text[0]) + text.Substring(1);
     }
 
     private void WaySelected()

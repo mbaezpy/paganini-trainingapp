@@ -365,7 +365,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 6813224657209451913}
+  - {fileID: 8598835344049609797}
   m_Father: {fileID: 5801947816389198928}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -929,8 +929,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 771313945547775369}
   m_HandleRect: {fileID: 4468730607830698902}
   m_Direction: 2
-  m_Value: 0
-  m_Size: 1
+  m_Value: 1
+  m_Size: 0.7762006
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -1089,7 +1089,7 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!1001 &6700312687638887617
+--- !u!1001 &8440896298214901005
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -1209,7 +1209,7 @@ PrefabInstance:
     - target: {fileID: 175962928739309897, guid: b33302b045f2f4fbdbfd1fbb47cd2e99,
         type: 3}
       propertyPath: m_Name
-      value: DestinationCard
+      value: WayListItem
       objectReference: {fileID: 0}
     - target: {fileID: 861603333953130215, guid: b33302b045f2f4fbdbfd1fbb47cd2e99,
         type: 3}
@@ -1230,21 +1230,6 @@ PrefabInstance:
         type: 3}
       propertyPath: m_AnchoredPosition.x
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1264239964314251623, guid: b33302b045f2f4fbdbfd1fbb47cd2e99,
-        type: 3}
-      propertyPath: destinationName
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 1264239964314251623, guid: b33302b045f2f4fbdbfd1fbb47cd2e99,
-        type: 3}
-      propertyPath: DestinationPhoto
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 1264239964314251623, guid: b33302b045f2f4fbdbfd1fbb47cd2e99,
-        type: 3}
-      propertyPath: destinationLandmark
-      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 2933518041954359150, guid: b33302b045f2f4fbdbfd1fbb47cd2e99,
         type: 3}
@@ -1518,9 +1503,9 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b33302b045f2f4fbdbfd1fbb47cd2e99, type: 3}
---- !u!224 &6813224657209451913 stripped
+--- !u!224 &8598835344049609797 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 175962928739309896, guid: b33302b045f2f4fbdbfd1fbb47cd2e99,
     type: 3}
-  m_PrefabInstance: {fileID: 6700312687638887617}
+  m_PrefabInstance: {fileID: 8440896298214901005}
   m_PrefabAsset: {fileID: 0}
