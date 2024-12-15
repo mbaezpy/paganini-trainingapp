@@ -43,6 +43,16 @@ public static class PictureUtils
         image.gameObject.SetActive(true);
     }
 
+    public static void RenderPicture(Image image, Texture2D texture, bool destroyPrevious = true){
+        if (image.sprite != null && destroyPrevious)
+        {
+            UnityEngine.Object.DestroyImmediate(image.sprite, true);
+        }
+
+        image.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
+        image.gameObject.SetActive(true);
+    }
+
     public static Texture2D LoadImage(string path)
     {
         Texture2D tex = null;
@@ -52,7 +62,10 @@ public static class PictureUtils
         {
             fileData = System.IO.File.ReadAllBytes(path);
             tex = new Texture2D(2, 2);
-            tex.LoadImage(fileData); //..this will auto-resize the texture dimensions.
+            tex.LoadImage(fileData); //..this will auto-resize the texture dimensions.            
+        }
+        else {
+            Debug.LogError("File not found: " + path);
         }
         return tex;
     }    

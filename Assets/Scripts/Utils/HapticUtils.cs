@@ -18,13 +18,18 @@ public static class HapticUtils
     private const long NudgeVibrationPauseDuration = 100;
     private static readonly long[] NudgeVibrationPattern = { 0, NudgeVibrationDuration, NudgeVibrationPauseDuration, NudgeVibrationDuration };
 
+
+    public static void VibrateForClick(){
+        Vibration.Instance.CreateOneShot(ShortVibrationDuration);
+    }
+
     /// <summary>
     /// Triggers a short vibration for a notification.
     /// </summary>
     public static void VibrateForNotification()
     {
         Vibration.Instance.CreateOneShot(ShortVibrationDuration);
-    }
+    }    
 
     /// <summary>
     /// Triggers an alert vibration pattern to call for attention.

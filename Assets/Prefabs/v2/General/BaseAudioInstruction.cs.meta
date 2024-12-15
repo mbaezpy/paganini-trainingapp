@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 06a53e651e9c944c49fe9f8840e73213
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - TapSound: {fileID: 8300000, guid: b3f5768e6f1bc4f8ab5b73df2555320e, type: 3}
+  - PopupSound: {fileID: 8300000, guid: c3681e25f5ba7494f8e5826f35ef6e17, type: 3}
+  - AudioStatus: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

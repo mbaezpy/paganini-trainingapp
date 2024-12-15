@@ -1,43 +1,39 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class WaysDataHandler : MonoBehaviour
 {
     /// <summary>
     /// Game Object to Display Wege in
     /// </summary>
-
-    //TODO: get from parent
     public LoginManager LoginHandler;
+
+    [Header(@"Main views")]
+    public GameObject ERWListView;
+    public GameObject ERWCreationView;
+    public GameObject ERWStartView;
+    public GameObject ERWDeleteView;
 
     [Header(@"List Configuration")]
     public GameObject WayListView;
     private WayList WayListHandler;
 
-
-    private List<Way> ways;
     private Way selectedWay;
+    private Route selectedRoute;
 
     [Header(@"Creation form Configuration")]
-    public TMPro.TMP_InputField WegName;
-    public TMPro.TMP_InputField WegStart;
-    public TMPro.TMP_InputField WegZiel;
-
-    public GameObject StartIconsToggleGroup;
-    public GameObject DestinationIconsToggleGroup;
+    public RouteEditItem RouteEditFields;
 
     [Header(@"Start UI Configuration")]
-    public TMPro.TMP_Text StartPanelWegStart;
-    public TMPro.TMP_Text StartPanelWegZiel;
-
-    public GameObject StartPanelIconStart;
-    public GameObject StartPanelIconZiel;
+    public RouteEditItem RouteEditPreview;    
 
     public GameObject StartPanelOverwrite;
     public GameObject StartPanelNew;
+    public GameObject StartPanelUnderTraining;
+    public GameObject DeleteERWButton;
 
     private bool StatusOverwriteERW;
 
@@ -45,30 +41,37 @@ public class WaysDataHandler : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        //LoginHandler = gameObject.transform.GetComponentInParent<LoginManager>();
-
         WayListHandler = WayListView.GetComponent<WayList>();
 
-
         Debug.Log(Application.persistentDataPath);
-        AppState.SelectedWeg = -1;
+        AppState.ERW.ResetValues();
 
-
-        // We have a user session
-        //if (AppState.CurrentUser != null)
-        //{
-        //    DBConnector.Instance.Startup();
-        //    LoadWaysFromAPI();
-        //}
-
+        ShowView(ERWListView);
     }
 
+
+    /// <summary>
+    ///  Loads the ways from the API
+    /// </summary>
+    public void LoadWaysFromAPI()
+    {
+        Debug.Log("Loading Ways from API");
+        PaganiniRestAPI.Way.GetAll(GetWaysSucceed, GetWaysFailed);
+    }    
+
+    public void LoadCachedWays()
+    {
+        ShowView(ERWListView);
+        DisplayLocalERWList();
+    }
+
+    /// <summary>
+    /// Cancels the creation of a new ERW
+    /// </summary>
     public void CancelNewERW()
     {
         // If we are cancelling the overwriting, let's not delete the existing ERW.
         if (StatusOverwriteERW) return;
-
-        //DBConnector.Instance.GetConnection().Execute("Delete from Way where Status =" + ((int)Way.WayStatus.Local) + " and Id =" + selectedWay.Id);
 
         // The ERW creation was cancelled, so we delete the Way if it was new
         var way = Way.Get(selectedWay.Id);
@@ -77,144 +80,107 @@ public class WaysDataHandler : MonoBehaviour
             Way.Delete(selectedWay.Id);
         }
 
-
-        AppState.currentBegehung = null;
-        AppState.SelectedBegehung = -1;
-        AppState.SelectedWeg = -1;
+        AppState.ERW.ResetValues();
         selectedWay = null;
+        selectedRoute = null;
 
-        LoadWaysFromLocalStorage();
-
-    }
-
-
-    public void LoadWaysFromAPI()
-    {
-        PaganiniRestAPI.Way.GetAll(GetWaysSucceed, GetWaysFailed);
-    }
-
-
-    /// <summary>
-    /// Reads back in the Wege List from SQLite and Saves it in the Object
-    /// </summary>
-    void LoadWaysFromLocalStorage()
-    {
-        List<Way> ways = Way.GetAll(); //DBConnector.Instance.GetConnection().Query<Way>("Select * FROM Way");
-        Debug.Log("Restorewege -> Capacity: " + ways.Count);
-
-        if (ways.Count > 0)
-            this.ways = ways;
-        else
-            this.ways = null;
-
-        //List<Way> wege = DBConnector.Instance.GetConnection().Query<Way>("Select * FROM Way");
-        //Debug.Log("Restorewege -> Capacity: " + wege.Count);
-
-        //if (wege.Count > 0)
-        //    this.ways = wege;
-        //else
-        //    this.ways = null;
-
-        DisplayWege();
+        DisplayLocalERWList();
     }
 
     /// <summary>
-    /// Deletes ways Data
+    /// Create new way and load the start panel
     /// </summary>
-    public void DeleteLocalData()
+    public void AddWayAndStart()
     {
-        // We delete everything except what hasn't been synchronised yet
-        //DBConnector.Instance.GetConnection().DeleteAll<Way>();
+        var w = RouteEditFields.ExportEditedWay();
 
-        //DBConnector.Instance.GetConnection().Execute("Delete from Way where Status =" + ((int)Way.WayStatus.FromAPI));
-        Way.DeleteNonDirtyCopies();
+        // safely create a local ID  
+        var minWay = Way.GetWithMinId(w => w.Id);
+        w.Id = minWay == null ? -1 : Math.Min(minWay.Id, 0) - 1;
 
+        w.InsertDirty();
+
+        SetUpStartPanel(w, null);        
+    }
+
+    /// <summary>
+    /// Set up creation panel
+    /// </summary>
+    public void SetUpCreationPanel(){
+        ShowView(ERWCreationView);
+        RouteEditFields.ResetValues();
+    }
+
+    /// <summary>
+    /// Show delete panel
+    /// </summary>
+    public void ShowDeletePanel(){
+        ShowView(ERWDeleteView);
+    }
+
+    public void DeleteERW(){
+        // Route.Delete(selectedRoute.Id);
+        // Pathpoint.DeleteFromRoute(selectedRoute.Id, null, null);        
+
+        // // Delete the way if it's local, and there are no other routes along this way
+        // if (!selectedWay.FromAPI)        
+        // {
+        //     var routes = Route.GetAll(r => r.WayId == selectedWay.Id);
+        //     if (routes.Count == 0)
+        //     {
+        //         Way.Delete(selectedWay.Id);
+        //     }
+        // }
+
+        Route.DeleteDraftCascade(selectedRoute.Id);
+
+        var folder = new LocalFolder.ERWFolder(selectedRoute);
+        folder.DeleteFolder();
+
+        selectedWay = null;
+        selectedRoute = null;
+
+        LoadCachedWays();
+    }
+
+    /// <summary>
+    /// Set up start panel with given information
+    /// </summary>
+    /// <param name="w">Way object</param>
+    public void SetUpStartPanel(Way w, Route r)
+    {        
+        SessionData.Instance.SaveData("SelectedWay", w);
+        selectedWay = w;
+        selectedRoute = r;        
+
+        ShowView(ERWStartView);        
         
-        LoadWaysFromLocalStorage();
+        RouteEditPreview.LoadWay(selectedWay);
+        SetupERWCreationOptions();
     }
 
     /// <summary>
     /// Saves ways to SQLite
     /// </summary>
-    void SaveWaysToLocalStorage()
+    /// <param name="list">List of WegAPI objects</param>
+    void SaveWaysToLocalStorage(WayAPIList list)
     {
-        if (ways != null)
+        // Delete local cache
+        Way.DeleteNonDirtyCopies();
+        Route.DeleteNonDirtyCopies();
+
+        foreach (var w in list.ways)
         {
-            foreach (Way w in ways)
-            {
-                //DBConnector.Instance.GetConnection().InsertOrReplace(w);
-                w.Insert();
+            var way = new Way(w);
+            way.Insert();
+
+            foreach(var r in w.routes) {
+                var route = new Route(r);
+                route.Insert();
             }
-
         }
-
     }
 
-
-    /// <summary>
-    /// Create new way
-    /// </summary>
-    public void AddWay()
-    {
-
-        LandmarkToggleList startIcon = StartIconsToggleGroup.GetComponent<LandmarkToggleList>();
-        LandmarkToggleList destinationIcon = DestinationIconsToggleGroup.GetComponent<LandmarkToggleList>();
-
-        var w = new Way
-        {
-            Name = WegName.text,
-            Start = WegStart.text,
-            StartType = ((int) startIcon.SelectedLandMarkType).ToString(),
-            Destination = WegZiel.text,
-            DestinationType = ((int)destinationIcon.SelectedLandMarkType).ToString(),
-            Description = WegStart.text + "->" + WegZiel.text,
-            FromAPI = false,
-            IsDirty = true
-        };
-
-        if (ways == null) {
-            ways = new List<Way>();
-        }
-
-        // safely create an ID, as the seconds since 2010        
-        TimeSpan t = (DateTime.UtcNow - new DateTime(2010, 1, 1));
-        w.Id = - (int)t.TotalSeconds;
-
-        ways.Add(w);
-        SaveWaysToLocalStorage();
-        LoadWaysFromLocalStorage();
-
-        AppState.SelectedWeg = w.Id;
-        AppState.currentBegehung = w.Name;
-
-        SetSelectedWay(w);        
-
-    }
-    
-    public void SetSelectedWay(Way w)
-    {
-        SessionData.Instance.SaveData("SelectedWay", w);
-        selectedWay = w;
-    }
-
-
-    /// <summary>
-    /// Set up start panel with given information
-    /// </summary>
-    public void SetUpStartPanel()
-    {
-        
-        // set text 
-        StartPanelWegStart.text = selectedWay.Start;
-        StartPanelWegZiel.text = selectedWay.Destination;
-
-        StartPanelIconStart.GetComponent<LandmarkIcon>().SetSelectedLandmark(Int32.Parse(selectedWay.StartType));
-        StartPanelIconZiel.GetComponent<LandmarkIcon>().SetSelectedLandmark(Int32.Parse(selectedWay.DestinationType));
-
-        
-        CheckIfLocalERW();
-
-    }
 
     /// <summary>
     /// Request was successful
@@ -222,19 +188,9 @@ public class WaysDataHandler : MonoBehaviour
     /// <param name="ways">List of WegAPI objects</param>
     private void GetWaysSucceed(WayAPIList list)
     {
-        // Delete local cache
-        DeleteLocalData();
-
-        this.ways = new List<Way>();
-        foreach (var w in list.ways)
-        {
-            this.ways.Add(new Way(w));
-            Debug.Log(new Way(w));
-        }
-
-        // Save API results, and then load it for use
-        SaveWaysToLocalStorage();
-        LoadWaysFromLocalStorage();
+        Debug.Log("Ways loaded successfully");
+        SaveWaysToLocalStorage(list);
+        DisplayLocalERWList();
     }
 
     /// <summary>
@@ -245,12 +201,13 @@ public class WaysDataHandler : MonoBehaviour
     {
         Debug.LogError(errorMessage);
 
-
-        Assets.ErrorHandlerSingleton.GetErrorHandler().AddNewError("Error Loading Ways", errorMessage);
+        //ToastManager.Instance.Toast.ShowError("Error Loading Ways", errorMessage);
+       // Assets.ErrorHandlerSingleton.GetErrorHandler().AddNewError("Error Loading Ways", errorMessage);
 
 
         // TODO: Implement scene switching with "messages" displayed on the login (e.g., pin no valid)
 
+        //TODO: Replace for a more general error handling (see tablet app)
         if (errorMessage == "Unauthorised")
         {
             LoginHandler.Logout();
@@ -258,78 +215,116 @@ public class WaysDataHandler : MonoBehaviour
         }
 
         // Load it from the database if there are problems (e.g., connection problems)
-        LoadWaysFromLocalStorage();
+        DisplayLocalERWList();
 
     }
 
     /// <summary>
     /// Prints the Begehungen to the GUI
     /// </summary>
-
-    private void DisplayWege()
+    private void DisplayLocalERWList()
     {
 
-        if (this.ways == null || this.ways.Capacity == 0)
+        List<Way> ways = Way.GetAll(w => w.FromAPI == false); 
+
+        if (ways == null || ways.Count == 0)
         {
-            WayListHandler.ShowBlankState();        
+            WayListHandler.ShowBlankState();    
+            return;    
         }
-        else
-        { 
-            WayListHandler.ClearList();
 
-            foreach (Way w in ways)
+        WayListHandler.ClearList();
+
+        int routeCount = 0;
+        foreach (Way w in ways)
+        {
+            var routes = Route.GetAll(r => r.WayId == w.Id);
+            if (routes.Count > 0)
             {
-                WayListHandler.AddWayItem(w);
-            }
+                var dirtyCopies = routes.FindAll(r => !r.FromAPI);
+                // If we don't have dirty copies, we take one example, of the route
+                // in the lowest process status. The user would be able to click on it
+                // and add more routes to the way
+                if (dirtyCopies.Count == 0)
+                {
+                    routes = routes.OrderByDescending(r => (int)r.Status).ToList();                    
+                    routes = routes.Take(1).ToList();
+                }
 
-            WayListHandler.ShowWayList();
+            }
+            w.Routes = routes;
+
+            foreach(var route in w.Routes) 
+            {                
+                routeCount++;
+                WayListHandler.AddWayItem(w, route);                
+            }                
         }
+        WayListHandler.ShowWayList();        
     }
 
-
-    public void CreateNewERW()
+    /// <summary>
+    /// Create a new ERW
+    /// </summary>
+    public void CreateNewOrReplaceERW(bool overwrite)
     {
-        Route.Delete(selectedWay.Id);
-        Pathpoint.DeleteFromRoute(selectedWay.Id, null, null);
+        if (overwrite && selectedRoute != null)
+        {
+            Route.Delete(selectedRoute.Id);
+            Pathpoint.DeleteFromRoute(selectedWay.Id, null, null);
+        }
 
-        //DBConnector.Instance.GetConnection().Execute("DELETE FROM ExploratoryRouteWalk where Id=" + selectedWay.Id);
-        //DBConnector.Instance.GetConnection().Execute("DELETE FROM Pathpoint where RouteId=" + selectedWay.Id);
 
+        // local id (negative range)
+        var r = Route.GetWithMinId(r => r.WayId);
+        int routeId = r == null ? -1 : Math.Min(r.Id, 0) - 1;
 
         Route route = new Route();
-        route.Id = selectedWay.Id;
+        route.Id = routeId;
         route.WayId = selectedWay.Id;
         route.Date = DateTime.Now.ToUniversalTime();
         route.Name = selectedWay.Name;
-        route.FromAPI = false;
-        route.IsDirty = true;
-       
+
+        route.InsertDirty();
 
         // We set the current exploratory walk
-        AppState.currentBegehung = route.Name;
-        AppState.SelectedBegehung = selectedWay.Id;
-        AppState.SelectedWeg = selectedWay.Id;
-
-        //DBConnector.Instance.GetConnection().InsertOrReplace(route);
-        route.Insert();
+        AppState.ERW.CurrentRoute = route;
+        AppState.ERW.CurrentWay = selectedWay;
 
     }
 
-
-
-    private void CheckIfLocalERW()
+    /// <summary>
+    /// Setup the ERW creation options based on the selected way, enabling
+    /// users to either create a new route or overwrite an existing one.
+    /// </summary>
+    private void SetupERWCreationOptions()
     {
-        //List<Route> erws = DBConnector.Instance.GetConnection().Query<Route>("Select * FROM ExploratoryRouteWalk where Id=" + selectedWay.Id);
-        //Debug.Log("CheckIfLocalERW -> Capacity: " + erws.Count);
-
-        var routeExists = Route.CheckIfExists(r => r.Id == selectedWay.Id);
+        var routeExists = selectedRoute != null && Route.CheckIfExists(r => r.Id == selectedRoute.Id);
        
-
-        StartPanelOverwrite.SetActive(routeExists);
-        StartPanelNew.SetActive(!routeExists);
+       StartPanelNew.SetActive(!routeExists);
+       DeleteERWButton.SetActive(routeExists && !selectedRoute.FromAPI); // delete only local routes
+       
+       if (routeExists) {
+            StartPanelUnderTraining.SetActive(selectedRoute.FromAPI);  // already exported
+            StartPanelOverwrite.SetActive(!selectedRoute.FromAPI); // not exported, exists locally
+       }
+       else {
+              StartPanelUnderTraining.SetActive(false);
+              StartPanelOverwrite.SetActive(false);
+       }
 
         StatusOverwriteERW = routeExists;
+    }
 
+    /// <summary>
+    /// Show a given view, hiding the others
+    /// </summary>
+    private void ShowView(GameObject view)
+    {
+        ERWListView.SetActive(view == ERWListView);
+        ERWCreationView.SetActive(view == ERWCreationView);
+        ERWStartView.SetActive(view == ERWStartView);
+        ERWDeleteView.SetActive(view == ERWDeleteView);
     }
 
 

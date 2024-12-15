@@ -17,8 +17,12 @@ public class SyncProcessHandler : MonoBehaviour
 {
     public FileTransferServer fileTransferServer;
 
-    [Header("Sync UI Configuration")]
-    public GameObject SmartphoneAskForConnectionText;
+    [Header("Export methods views")]
+    public GameObject ExportMethodView;
+    public GameObject ExportTabletView;
+    public GameObject ExportUSBView;
+
+    [Header("Sync UI Steps")]
     public GameObject UI_AskForConnection;
     public GameObject UI_NoData;
     public GameObject UI_WaitForTablet;
@@ -28,6 +32,10 @@ public class SyncProcessHandler : MonoBehaviour
     public GameObject UI_SyncError;
     public GameObject UI_SyncCancel;
 
+    [Header("Sync UI Elements")]
+    public GameObject SmartphoneAskForConnectionText;
+    public GameObject PairingViewOverlay;
+    public SyncPairViz PairingViz;
     public Progressbar Progressbar;
 
     private List<Way> ways;
@@ -83,6 +91,8 @@ public class SyncProcessHandler : MonoBehaviour
             DBConnector.Instance.Startup();
             GetWaysFromLocalDatabase();
         }
+
+        ShowMainView(ExportMethodView);
     }
 
 
@@ -120,6 +130,10 @@ public class SyncProcessHandler : MonoBehaviour
 
         // Initialise synchronisation folder
         ResetSynchronisationFolders();
+
+
+        DisplaySyncUIPanel(UI_WaitForTablet);
+        PairingViz.RenderConnecting();        
     }
 
 
@@ -129,8 +143,8 @@ public class SyncProcessHandler : MonoBehaviour
     /// </summary>
     public void AcceptConnection()
     {
-        //UI_AskForConnection.SetActive(false);
-        //UI_WaitForConnectionWithTablet.SetActive(true);
+        PairingViz.RenderPairingAccepted();
+
         DisplaySyncUIPanel(UI_WaitForConnectionWithTablet);
 
         // create and copy files to synchronize
@@ -151,8 +165,7 @@ public class SyncProcessHandler : MonoBehaviour
     /// </summary>
     public void DenyConnection()
     {        
-        //UI_AskForConnection.SetActive(false);
-        //UI_WaitForTablet.SetActive(true);
+        PairingViz.RenderConnecting();
         DisplaySyncUIPanel(UI_WaitForTablet);
 
         // inform tablet
@@ -187,10 +200,9 @@ public class SyncProcessHandler : MonoBehaviour
 
             // name on ui
             SmartphoneAskForConnectionText.GetComponent<TMP_Text>().text = SmartphoneAskForConnectionText.GetComponent<TMP_Text>().text.Replace("[TABLETNAME]", comp[0]);
-
+            PairingViz.RenderPairingTo(comp[0]);
             // interface to user decision
-            //UI_WaitForTablet.SetActive(false);
-            //UI_AskForConnection.SetActive(true);
+
             DisplaySyncUIPanel(UI_AskForConnection);
 
 
@@ -218,8 +230,21 @@ public class SyncProcessHandler : MonoBehaviour
 
             foreach (var way in ways)
             {
-                DetailedWayExport detailedWayExport = FilledOutRecordingReport(way);                
-                wayExports.Add(detailedWayExport);
+                // DetailedWayExport detailedWayExport = FilledOutRecordingReport(way);                
+                // wayExports.Add(detailedWayExport);
+
+                List<Route> routes = Route.GetAll(r => r.WayId == way.Id && !r.FromAPI && r.StartTimestamp != null && r.EndTimestamp != null); // that are local
+
+                if (routes.Count == 0)
+                {
+                    continue;
+                }
+
+                foreach (var erw in routes)
+                {
+                    DetailedWayExport detailedWayExport = FilledOutRecordingReport(way, erw);
+                    wayExports.Add(detailedWayExport);             
+                }                     
 
                 // use destination folder
                 PrepareERWForFileExport(way.Id, destFolder);
@@ -239,6 +264,7 @@ public class SyncProcessHandler : MonoBehaviour
     }
 
 
+
     private void DisplaySyncUIPanel(GameObject view) {
         UI_AskForConnection.SetActive(UI_AskForConnection == view);
         UI_NoData.SetActive(UI_NoData == view);
@@ -248,6 +274,16 @@ public class SyncProcessHandler : MonoBehaviour
         UI_SyncFinshed.SetActive(UI_SyncFinshed == view);
         UI_SyncError.SetActive(UI_SyncError == view);
         UI_SyncCancel.SetActive(UI_SyncCancel == view);        
+
+        // Pairing overlay
+        if (view != UI_NoData && view != UI_SyncFinshed)
+        {
+            PairingViewOverlay.SetActive(true);
+        }
+        else
+        {
+            PairingViewOverlay.SetActive(false);
+        }
     }
 
 
@@ -260,16 +296,17 @@ public class SyncProcessHandler : MonoBehaviour
     /// </summary>
     private void GetWaysFromLocalDatabase()
     {
+        //TODO: Replace with new ORM
         string q = "Select w.* FROM way w join Route erw ON" +
             " w.Id = erw.WayId " +
             " WHERE (w.FromAPI = ?) or (erw.FromAPI = ?)";
 
-        List<Way> wege = DBConnector.Instance.GetConnection().Query<Way>(q, new object[] { false, false });
-        Debug.Log("Restorewege -> Capacity: " + wege.Count);
+        List<Way> wayList = DBConnector.Instance.GetConnection().Query<Way>(q, new object[] { false, false });
+        Debug.Log("Restorewege -> Count: " + wayList.Count);
 
 
-        if (wege.Count > 0)
-            this.ways = wege;
+        if (wayList.Count > 0)
+            this.ways = wayList;
         else
         {
             this.ways = null;
@@ -286,7 +323,7 @@ public class SyncProcessHandler : MonoBehaviour
     ///  Generates a DetailedWayExport entry from a Way definition. 
     /// </summary>
     /// <param name="way">A Way definition </param>
-    private DetailedWayExport FilledOutRecordingReport(Way way)
+    private DetailedWayExport FilledOutRecordingReport(Way way, Route erw)
     {
         // TODO: Check if this is used
         // Only local ERW should be considered!
@@ -301,26 +338,25 @@ public class SyncProcessHandler : MonoBehaviour
             StartType = way.StartType,
             UserId = AppState.CurrentUser.Id,
             FromAPI = way.FromAPI
-        };
+        };   
 
-        //List<Route> erw = (DBConnector.Instance.GetConnection().Query<Route>("Select * FROM ExploratoryRouteWalk where Way_id = ?", new object[] { way.Id }));
-        List<Route> erw = Route.GetRouteListByWay(way.Id);
-        
-        if (erw.Count > 0)
+        if (erw.StartTimestamp.HasValue && erw.EndTimestamp.HasValue)
         {
-            detailedWayExport.RecordingName = erw[0].Name;
-            detailedWayExport.RecordingDate = erw[0].Date;
-            detailedWayExport.LocalVideoResolution = erw[0].LocalVideoResolution;
+            detailedWayExport.RouteId = erw.Id;
+            detailedWayExport.RecordingName = erw.Name;
+            detailedWayExport.RecordingDate = erw.Date;
+            detailedWayExport.LocalVideoResolution = erw.LocalVideoResolution;
 
-            detailedWayExport.StartTimestamp = (long)erw[0].StartTimestamp;
-            detailedWayExport.EndTimestamp = (long)erw[0].EndTimestamp;
-            detailedWayExport.SocialWorkerId = erw[0].SocialWorkerId;
+            detailedWayExport.StartTimestamp = erw.StartTimestamp.HasValue ? erw.StartTimestamp.Value : 0;
+            detailedWayExport.EndTimestamp = erw.EndTimestamp.HasValue ? erw.EndTimestamp.Value : 0;
+            detailedWayExport.SocialWorkerId = erw.SocialWorkerId;
         }
         else
         {
-            LogError("There is no ERW for Way with Id = " + way.Id);
+            LogError($"FilledOutRecordingReport: ERW Id:{erw.Id} was not properly recorded no start or end timestamp");
         }
 
+  
         return detailedWayExport;
     }
 
@@ -337,14 +373,25 @@ public class SyncProcessHandler : MonoBehaviour
         {
             wayExports = new List<DetailedWayExport>();
 
+            //TODO: Iterate over way+routes
             foreach (var way in ways)
             {
-                DetailedWayExport detailedWayExport = FilledOutRecordingReport(way);
+                List<Route> routes = Route.GetAll(r => r.WayId == way.Id && !r.FromAPI && r.StartTimestamp != null && r.EndTimestamp != null); // that are local
 
-                // Create the dummy files, representing the request messages for the way
-                File.Create(destFolder + "/REQUEST-ERW-" + way.Id).Close();
+                if (routes.Count == 0)
+                {
+                    continue;
+                }
 
-                wayExports.Add(detailedWayExport);
+                foreach (var erw in routes)
+                {
+                    DetailedWayExport detailedWayExport = FilledOutRecordingReport(way, erw);
+                    wayExports.Add(detailedWayExport);
+
+                    // Create the dummy files, representing the request messages for the way
+                    File.Create(destFolder + "/REQUEST-ERW-" + erw.Id).Close();                    
+                }                                
+
             }
 
             // write down to xml
@@ -367,9 +414,11 @@ public class SyncProcessHandler : MonoBehaviour
     {
         string destFolder = FileManagement.persistentDataPath + "/"+ fileTransferServer._sharedFolder; 
         CountOfFiles = 0;
-        var way = ways.FirstOrDefault(w => w.Id == id);
 
-        DetailedWayExport detailedWayExport = FilledOutRecordingReport(way);
+        var route = Route.Get(id);
+        var way = Way.Get(route.WayId);
+
+        DetailedWayExport detailedWayExport = FilledOutRecordingReport(way, route);
 
         // set destination folder for tablet
         detailedWayExport.Folder = way.Name;
@@ -377,8 +426,8 @@ public class SyncProcessHandler : MonoBehaviour
         // Get GPS coordinates
         //List<Pathpoint> points = DBConnector.Instance.GetConnection().Query<Pathpoint>("SELECT * FROM Pathpoint where RouteId=?", way.Id);
         // We take the first non uploaded Route.
-        List<Route> erw = Route.GetAll(x => x.WayId == way.Id && x.FromAPI == false);
-        List<Pathpoint> points = Pathpoint.GetPathpointListByRoute(erw[0].Id);
+        //List<Route> erw = Route.GetAll(x => x.WayId == way.Id && x.FromAPI == false);
+        List<Pathpoint> points = Pathpoint.GetPathpointListByRoute(route.Id);
            
         detailedWayExport.Points = SerializeGPSCoordinatesAsXML(points, detailedWayExport, destFolder); 
         CountOfFiles++;
@@ -427,9 +476,10 @@ public class SyncProcessHandler : MonoBehaviour
     private void PrepareERWForFileExport(int id, string destinationFolder)
     {
 
-        var way = ways.FirstOrDefault(w => w.Id == id);
+        var route = Route.Get(id);
+        var way = Way.Get(route.WayId);
 
-        DetailedWayExport detailedWayExport = FilledOutRecordingReport(way);
+        DetailedWayExport detailedWayExport = FilledOutRecordingReport(way, route);
 
         // set destination folder for tablet
         detailedWayExport.Folder = way.Name;
@@ -441,8 +491,7 @@ public class SyncProcessHandler : MonoBehaviour
 
         // Get GPS coordinates        
         // We take the first non uploaded Route.
-        List<Route> erw = Route.GetAll(x => x.WayId == way.Id && x.FromAPI == false);
-        List<Pathpoint> points = Pathpoint.GetPathpointListByRoute(erw[0].Id);
+        List<Pathpoint> points = Pathpoint.GetPathpointListByRoute(route.Id);
 
         detailedWayExport.Points = SerializeGPSCoordinatesAsXML(points, detailedWayExport, destinationFolder);
 
@@ -972,6 +1021,7 @@ public class SyncProcessHandler : MonoBehaviour
         public string Description { set; get; }
         public int UserId { set; get; }
 
+        public int RouteId { set; get; }
         public System.DateTime RecordingDate { set; get; }
         public string RecordingName { set; get; }
         public string LocalVideoResolution { set; get; }
@@ -1092,6 +1142,13 @@ public class SyncProcessHandler : MonoBehaviour
             }
         }
 
+
+    }
+
+    public void ShowMainView(GameObject view){
+        ExportMethodView.SetActive(ExportMethodView == view);
+        ExportTabletView.SetActive(ExportTabletView == view);
+        ExportUSBView.SetActive(ExportUSBView == view);
 
     }
 }

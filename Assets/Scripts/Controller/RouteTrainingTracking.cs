@@ -27,14 +27,16 @@ public class RouteTrainingTracking : MonoBehaviour
     [SerializeField] private int SimulationUpdateInterval = 3; // Update interval in seconds
 
 
-    private Boolean running = false;
-    public PathpointEvent OnLocationUpdated;
+    private Boolean running = false;    
     private List<PathpointLog> walkLog;
+    private Route CurrentRoute;
 
+    public PathpointEvent OnLocationUpdated;
     public UnityEvent OnSimulationEnded;
 
-    public void StartTracking()
+    public void StartTracking(Route route)
     {        
+        CurrentRoute = route;
 
         if (!RunSimulation)
         {
@@ -58,7 +60,7 @@ public class RouteTrainingTracking : MonoBehaviour
         WalkSimulationId = routeWalkId;
         SimulationUpdateInterval = updateInternval;
 
-        StartTracking();
+        StartTracking(null);
     }
 
 
@@ -160,7 +162,7 @@ public class RouteTrainingTracking : MonoBehaviour
     {
         Pathpoint punkt = new Pathpoint
         {
-            RouteId = AppState.SelectedBegehung,
+            RouteId = CurrentRoute.Id,
             Longitude = UnityEngine.Input.location.lastData.longitude,
             Latitude = UnityEngine.Input.location.lastData.latitude,
             Altitude = UnityEngine.Input.location.lastData.altitude,

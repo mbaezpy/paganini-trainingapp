@@ -318,7 +318,7 @@ public class Testing : MonoBehaviour
 
     private void LoadLocationTracking()
     {
-        RouteTracking.StartTracking();     
+        RouteTracking.StartTracking(SharedData.CurrentRoute);     
     }
 
 

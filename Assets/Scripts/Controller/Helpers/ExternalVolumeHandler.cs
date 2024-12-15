@@ -32,6 +32,9 @@ public class ExternalVolumeHandler : MonoBehaviour
         
     }
 
+    /// <summary>
+    /// Initialises the external volume handler.
+    /// </summary>
     public void Initialise()
     {
         DestinationFolderName = null;
@@ -63,8 +66,9 @@ public class ExternalVolumeHandler : MonoBehaviour
 
             VolumeNameText.text = DestinationFolderName;
 
-            VolumeLookupPanel.SetActive(false);
-            VolumeLSelectPanel.SetActive(true);            
+            // VolumeLookupPanel.SetActive(false);
+            // VolumeLSelectPanel.SetActive(true);      
+            ShowView(VolumeLSelectPanel);      
         }
         else
         {
@@ -73,7 +77,10 @@ public class ExternalVolumeHandler : MonoBehaviour
 
     }
 
-
+    /// <summary>
+    /// Checks if the volume is inserted.
+    /// </summary>
+    /// <returns></returns>
     IEnumerator CheckVolumeInserted()
     {
         bool volumeDisconnected = false;
@@ -92,14 +99,17 @@ public class ExternalVolumeHandler : MonoBehaviour
 
             ErrorMessageText.text = "The destination folder is no longer present. Is the USB stick still connected? ";
 
-            VolumeLSelectPanel.SetActive(false);
-            ExportErrorPanel.SetActive(true);
+            // VolumeLSelectPanel.SetActive(false);
+            // ExportErrorPanel.SetActive(true);
+            ShowView(ExportErrorPanel);
 
             yield return null;
         }
     }
 
-
+    /// <summary>
+    /// Starts the export process.
+    /// </summary>
     public void StartFilesExport()
     {       
 
@@ -107,8 +117,10 @@ public class ExternalVolumeHandler : MonoBehaviour
         {
             ErrorMessageText.text = "The destination folder is no longer present. Is the USB stick still connected? ";
 
-            VolumeLSelectPanel.SetActive(false);
-            ExportErrorPanel.SetActive(true);
+            // VolumeLSelectPanel.SetActive(false);
+            // ExportErrorPanel.SetActive(true);
+            ShowView(ExportErrorPanel);
+
             return;
         }
 
@@ -120,17 +132,35 @@ public class ExternalVolumeHandler : MonoBehaviour
             DestinationFolderPath = SFB.FileBrowserHelpers.CreateFolderInDirectory(DestinationFolderPath, exportFolder);
             SFB.FileBrowserHelpers.MoveDirectory(path, DestinationFolderPath);
 
-            FinishSuccessPanel.SetActive(true);
-            VolumeLSelectPanel.SetActive(false);
+            // FinishSuccessPanel.SetActive(true);
+            // VolumeLSelectPanel.SetActive(false);
+            ShowView(FinishSuccessPanel);
         }
         catch (Exception e)
         {
             ErrorMessageText.text = "Error copying files. ";
             Debug.Log(e.StackTrace);
 
-            VolumeLSelectPanel.SetActive(false);
-            ExportErrorPanel.SetActive(true);
+            // VolumeLSelectPanel.SetActive(false);
+            // ExportErrorPanel.SetActive(true);
+            ShowView(ExportErrorPanel);
         }
+    }
+
+    public void CancelExport()
+    {
+        // Stop coroutines if they are running
+        StopCoroutine(CheckPathCoroutine());
+        StopCoroutine(CheckVolumeInserted());
+
+    }
+
+
+    public void ShowView(GameObject view){
+        VolumeLSelectPanel.SetActive(VolumeLSelectPanel == view);
+        VolumeLookupPanel.SetActive(VolumeLookupPanel == view);
+        FinishSuccessPanel.SetActive(FinishSuccessPanel == view);
+        ExportErrorPanel.SetActive(ExportErrorPanel == view);
     }
 
 }

@@ -9,7 +9,7 @@ using UnityEngine.UI;
 public class FormRequirement
 {
     public enum FormRequirementType { Optional, Required};
-    public enum FieldType { Text, ToggleGroup };
+    public enum FieldType { Text, ToggleGroup, LandmarkIcon };
     
     public Object Field;
     public FieldType Type;
@@ -42,6 +42,11 @@ public class FormRequirement
             ToggleGroup item = ((GameObject)Field).GetComponent<ToggleGroup>();
             isValid = item.AnyTogglesOn();
         }
+        else if (Type == FieldType.LandmarkIcon)
+        {
+            LandmarkIcon item = ((GameObject)Field).GetComponent<LandmarkIcon>();
+            isValid = item.IsSelected();
+        }
 
         return isValid;        
     }
@@ -51,13 +56,26 @@ public class FormRequirement
 
         if (Type == FieldType.Text)
         {
-            TMPro.TMP_InputField item = (TMPro.TMP_InputField)Field;
+            TMP_InputField item;
+            if (Field is TMPro.TMP_InputField)
+            {
+                item = (TMPro.TMP_InputField)Field;
+            }
+            else
+            {
+                item = ((GameObject)Field).GetComponent<TMP_InputField>();
+            }                
             item.text = "";
         }
         else if (Type == FieldType.ToggleGroup)
         {
             ToggleGroup item = ((GameObject)Field).GetComponent<ToggleGroup>();
             item.SetAllTogglesOff();
+        }
+        else if (Type == FieldType.LandmarkIcon)
+        {
+            LandmarkIcon item = ((GameObject)Field).GetComponent<LandmarkIcon>();
+            item.SetSelectedLandmark((int)LandmarkIcon.LandmarkType.Placeholder);
         }
 
     }
@@ -93,6 +111,14 @@ public class FormValidator : MonoBehaviour
         
     }
 
+    public void ClearOutFields()
+    {
+        foreach (FormRequirement item in Fields)
+        {
+            item.ClearField();
+        }
+    }    
+
     private void HandleSubmission()
     {
         List<FormRequirement> failed = new List <FormRequirement> ();
@@ -118,14 +144,6 @@ public class FormValidator : MonoBehaviour
     {
         ClearOutFields();
         OnValidationSkipped.Invoke();
-    }
-
-    private void ClearOutFields()
-    {
-        foreach (FormRequirement item in Fields)
-        {
-            item.ClearField();
-        }
     }
 
     void OnDestroy()

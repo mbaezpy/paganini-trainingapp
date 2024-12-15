@@ -72,6 +72,26 @@ PrefabInstance:
       propertyPath: m_PresetInfoIsWorld
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3743076376156243192, guid: e07ac3efe5be4489f87f72d4b7262840,
+        type: 3}
+      propertyPath: FontPressedEffect
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4300588681326227112, guid: e07ac3efe5be4489f87f72d4b7262840,
+        type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4300588681326227112, guid: e07ac3efe5be4489f87f72d4b7262840,
+        type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4300588681326227112, guid: e07ac3efe5be4489f87f72d4b7262840,
+        type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 180
+      objectReference: {fileID: 0}
     - target: {fileID: 4300588681326227113, guid: e07ac3efe5be4489f87f72d4b7262840,
         type: 3}
       propertyPath: m_fontColor.b
@@ -210,6 +230,16 @@ PrefabInstance:
     - target: {fileID: 8270677742663042917, guid: e07ac3efe5be4489f87f72d4b7262840,
         type: 3}
       propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8270677742663042917, guid: e07ac3efe5be4489f87f72d4b7262840,
+        type: 3}
+      propertyPath: m_EffectColor.a
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8305895826739809398, guid: e07ac3efe5be4489f87f72d4b7262840,
+        type: 3}
+      propertyPath: m_PreserveAspect
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9021934669335445329, guid: e07ac3efe5be4489f87f72d4b7262840,

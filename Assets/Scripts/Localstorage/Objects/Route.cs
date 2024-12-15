@@ -114,6 +114,23 @@ public class Route : BaseModel<Route>
         return erw;
     }
 
+    public static void DeleteDraftCascade(int routeId){
+        Route.Delete(routeId);
+        Pathpoint.DeleteFromRoute(routeId, null, null);        
+
+        Way parent = Way.Get(Route.Get(routeId).WayId);
+
+        // Delete the way if it's local, and there are no other routes along this way
+        if (!parent.FromAPI)        
+        {
+            var routes = Route.GetAll(r => r.WayId == parent.Id);
+            if (routes.Count == 0)
+            {
+                Way.Delete(parent.Id);
+            }
+        }        
+    }
+
     public static List<Route> GetRouteListByWay(int wayId)
     {
         List<Route> routes;

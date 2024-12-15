@@ -90,7 +90,6 @@ GameObject:
   m_Component:
   - component: {fileID: 930925468608232985}
   - component: {fileID: 2238589307745506870}
-  - component: {fileID: 4195022692900126605}
   m_Layer: 5
   m_Name: DestinationCard
   m_TagString: Untagged
@@ -137,28 +136,14 @@ MonoBehaviour:
   destinationName: {fileID: 3421431009860261891}
   destinationLandmark: {fileID: 3868878154196422993}
   DestinationPhoto: {fileID: 3864706805346552584}
+  routeName: {fileID: 0}
+  recordingDate: {fileID: 0}
   selectionButton: {fileID: 7983515255629662316}
   LoadingPanel: {fileID: 4729764919431622585}
   CardPanel: {fileID: 1295317792850271984}
   OnSelected:
     m_PersistentCalls:
       m_Calls: []
---- !u!123 &4195022692900126605
-LensFlare:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 930925468608232984}
-  m_Enabled: 1
-  m_Flare: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0}
-  m_Brightness: 1
-  m_FadeSpeed: 3
-  m_IgnoreLayers:
-    serializedVersion: 2
-    m_Bits: 6
-  m_Directional: 0
 --- !u!1 &930925469837159929
 GameObject:
   m_ObjectHideFlags: 0
@@ -314,7 +299,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_EffectColor: {r: 0, g: 0, b: 0, a: 0.050980393}
-  m_EffectDistance: {x: 1, y: 1}
+  m_EffectDistance: {x: 2, y: 2}
   m_UseGraphicAlpha: 1
 --- !u!114 &9066597142289935169
 MonoBehaviour:
@@ -329,7 +314,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_EffectColor: {r: 0, g: 0, b: 0, a: 0.050980393}
-  m_EffectDistance: {x: -8, y: -8}
+  m_EffectDistance: {x: 0, y: -8}
   m_UseGraphicAlpha: 1
 --- !u!1 &1295317792850271984
 GameObject:

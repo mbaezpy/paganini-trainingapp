@@ -29,7 +29,7 @@ public class RouteTrainingDataHandler : MonoBehaviour
     void Start()
     {
         WayListHandler = WayListView.GetComponent<WayList>();
-        AppState.SelectedWeg = -1;   
+  
         if (AppState.CurrentUser != null)
         {
             GreetingText.text = GreetingText.text.Replace("{0}", AppState.CurrentUser.AppName); 
@@ -61,7 +61,7 @@ public class RouteTrainingDataHandler : MonoBehaviour
         {
             way.Routes = Route.GetAll(r => r.WayId == way.Id && r.Status == Route.RouteStatus.Training);
 
-            if (way.Routes.Capacity > 0)
+            if (way.Routes.Count > 0)
             {
                 ways.Add(way);
             }

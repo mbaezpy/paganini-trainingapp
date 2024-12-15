@@ -1,14 +1,16 @@
+using System;
 using System.Collections;
-using UnityEngine;
-using UnityEngine.UI;
-using UnityEngine.SceneManagement;
+using System.IO;
+using System.Threading.Tasks;
+using MathNet.Numerics.LinearAlgebra.Factorization;
 using NatSuite.Recorders;
 using NatSuite.Recorders.Clocks;
 using NatSuite.Recorders.Inputs;
-using System;
+using UnityEngine;
 using UnityEngine.Events;
-using MathNet.Numerics.LinearAlgebra.Factorization;
-using System.IO;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
+
 #if PLATFORM_ANDROID
 using UnityEngine.Android;
 #endif
@@ -18,11 +20,15 @@ using UnityEngine.Android;
 public class RecordingEvent : UnityEvent<string>
 {
 }
+
+/// <summary>
+/// The PhoneCam class is responsible for handling the phone's camera functionalities, including starting the camera, recording video, taking pictures, and managing microphone input.
+/// </summary>
 public class PhoneCam : MonoBehaviour
 {
     [Header(@"preview")]
-    public RawImage rawImage;
-    public AspectRatioFitter aspectRatioFitter;
+    public RawImage CamBackground;
+    public AspectRatioFitter CamAspectRatio;
 
     [Header(@"Recording")]
     public int videoWidth = 640;
@@ -36,12 +42,13 @@ public class PhoneCam : MonoBehaviour
     public bool recordMicrophone;
 
     [Header(@"UI Configuration")]
-    public GameObject IconFrom;
-    public GameObject IconTo;
+    // public GameObject IconFrom;
+    // public GameObject IconTo;
     public RecordingStatus RecordingInfo;
 
     [Header(@"Events")]
     public RecordingEvent OnRecordingError;
+    public UnityEvent<bool> OnPictureTakenReady;
 
     //private MP4Recorder recorder;
     private HEVCRecorder recorder;    
@@ -51,15 +58,18 @@ public class PhoneCam : MonoBehaviour
     private Color32[] pixelBuffer;
     private RealtimeClock clock;
 
-    private string RouteName;
+    private LocalFolder.ERWFolder RouteFolder;
     private Route CurrentRoute;
 
     private void Start()
     {
-        CurrentRoute = Route.Get(AppState.SelectedBegehung);
+        CurrentRoute = AppState.ERW.CurrentRoute;//Route.Get(AppState.SelectedBegehung);
 
     }
 
+    /// <summary>
+    /// Initializes the camera and checks for necessary permissions.
+    /// </summary>    
     public void StartCamera()
     {
         AppLogger.Instance.LogFromMethod(this.name, "StartCamera", "Checking permissions");
@@ -77,27 +87,31 @@ public class PhoneCam : MonoBehaviour
 
 #endif
 
-        if (AppState.currentBegehung == null || AppState.currentBegehung.Trim().Length == 0)
+        if (AppState.ERW.CurrentRoute == null)
         {
             SceneManager.LoadScene(SceneSwitcher.UserLoginScene);
         }
         else
         {
             StartCoroutine(InitialiseCamera());
-        }        
+        }  
+
+        // Clear the route folder that will be used to store the recordings  
+        RouteFolder = LocalFolder.ERWFolder.CreateOrResetFolder(AppState.ERW.CurrentRoute);
+                
     }
 
+    /// <summary>
+    /// Initializes the camera asynchronously.
+    /// </summary>
     private IEnumerator InitialiseCamera()
     {
         AppLogger.Instance.LogFromMethod(this.name, "InitialiseCamera", "Initialising camera.");
 
-        Way w = SessionData.Instance.GetData<Way>("SelectedWay");
-        IconFrom.GetComponent<LandmarkIcon>().SetSelectedLandmark(Int32.Parse(w.StartType));
-        IconTo.GetComponent<LandmarkIcon>().SetSelectedLandmark(Int32.Parse(w.DestinationType));
-
-
-        RouteName = AppState.currentBegehung;
-
+        // Way w = SessionData.Instance.GetData<Way>("SelectedWay");
+        // IconFrom.GetComponent<LandmarkIcon>().SetSelectedLandmark(Int32.Parse(w.StartType));
+        // IconTo.GetComponent<LandmarkIcon>().SetSelectedLandmark(Int32.Parse(w.DestinationType));
+        
 
         WebCamDevice[] devices = WebCamTexture.devices;
         if (devices.Length == 0)
@@ -135,10 +149,10 @@ public class PhoneCam : MonoBehaviour
 
         webCamTexture.Play();
         yield return new WaitUntil(() => webCamTexture.width > 16 && webCamTexture.height > 16); // workaround werid bug (according to natcorder)
-        rawImage.texture = webCamTexture;
-        aspectRatioFitter.aspectRatio = (float)webCamTexture.requestedWidth / webCamTexture.requestedHeight;
+        CamBackground.texture = webCamTexture;
+        CamAspectRatio.aspectRatio = (float)webCamTexture.requestedWidth / webCamTexture.requestedHeight;
 
-        AppLogger.Instance.LogFromMethod(this.name, "InitialiseCamera", $"Initialised camera with resolution - Width ({webCamTexture.width}) Height:{webCamTexture.height} AspectRatio: {aspectRatioFitter.aspectRatio}.");
+        AppLogger.Instance.LogFromMethod(this.name, "InitialiseCamera", $"Initialised camera with resolution - Width ({webCamTexture.width}) Height:{webCamTexture.height} AspectRatio: {CamAspectRatio.aspectRatio}.");
 
         // Start microphone
         microphoneSource = gameObject.AddComponent<AudioSource>();
@@ -164,6 +178,11 @@ public class PhoneCam : MonoBehaviour
         microphoneSource.Play();
     }
 
+    /// <summary>
+    /// Gets the supported resolution for the specified webcam device.
+    /// </summary>
+    /// <param name="device">The webcam device.</param>
+    /// <returns>The supported resolution.</returns>
     private Resolution GetSupportedResolution(WebCamDevice device)
     {
         // Get all available webcam devices.
@@ -197,27 +216,7 @@ public class PhoneCam : MonoBehaviour
             }
         }
         
-
         return defaultRes;
-    }
-
-
-
-    private void OnDestroy()
-    {
-        if (microphoneSource != null)
-        {
-            // Stop microphone
-            microphoneSource.Stop();
-            Microphone.End(null);
-        }
-
-        if (webCamTexture != null)
-        {
-            webCamTexture.Stop();
-            Destroy(rawImage.texture);
-            webCamTexture = null;
-        }
     }
 
     // Update is called once per frame
@@ -227,7 +226,7 @@ public class PhoneCam : MonoBehaviour
     void Update()
     {
 
-        if (AppState.recording && !AppState.pausedRec)
+        if (AppState.ERW.recording && !AppState.ERW.pausedRec)
         {
             if (webCamTexture.didUpdateThisFrame) 
             {
@@ -260,16 +259,16 @@ public class PhoneCam : MonoBehaviour
         } 
     }
 
+    /// <summary>
+    /// Starts the recording of the video
+    /// </summary>
     public void StartRecording()
     {
-        if (!AppState.recording)
+        if (!AppState.ERW.recording)
         {
             AppLogger.Instance.LogFromMethod(this.name, "StartRecording", "Starting recording");
             try
             {            
-                if (Directory.Exists(Path.Combine(Application.persistentDataPath, RouteName)))
-                    Directory.Delete(Path.Combine(Application.persistentDataPath, RouteName),true);
-
                 // Start recording
                 var sampleRate = recordMicrophone ? AudioSettings.outputSampleRate : 0;
                 var channelCount = recordMicrophone ? (int)AudioSettings.speakerMode : 0;
@@ -284,7 +283,7 @@ public class PhoneCam : MonoBehaviour
                 audioInput = recordMicrophone ? new AudioInput(recorder, clock, microphoneSource, true) : null;
                 // Unmute microphone
                 microphoneSource.mute = audioInput == null;
-                AppState.recording = true;
+                AppState.ERW.recording = true;
 
                 CurrentRoute.SocialWorkerId = AppState.CurrentSocialWorker.Id;
                 CurrentRoute.StartTimestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
@@ -306,37 +305,45 @@ public class PhoneCam : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Stops the recording and saves the recorded files
+    /// </summary>
     public async void StopRecording()
     {
-        if (AppState.recording)
+        if (AppState.ERW.recording)
         {
             try
             {
                 AppLogger.Instance.LogFromMethod(this.name, "StopRecording", "Stopping and saving recording");
 
-                AppState.recording = false;
+                AppState.ERW.recording = false;
                 // Mute microphone
                 microphoneSource.mute = true;
                 // Stop recording
                 audioInput?.Dispose();
                 var path = await recorder.FinishWriting();
 
+                
+
                 // Playback recording
                 Debug.LogWarning($"Saved recording to: {path}");
-                string[] split = path.Split('/');
-                string filename = "/" + split[split.Length - 1]; //".mp4";
-                if (!Directory.Exists(Path.Combine(Application.persistentDataPath, RouteName)))
-                {
-                    Directory.CreateDirectory(Path.Combine(Application.persistentDataPath, RouteName));
-                }
+                // string[] split = path.Split('/');
+                // string filename = split[split.Length - 1]; //".mp4";
+                string filename = Path.GetFileName(path);
+                // if (!Directory.Exists(Path.Combine(Application.persistentDataPath, RouteName)))
+                // {
+                //     Directory.CreateDirectory(Path.Combine(Application.persistentDataPath, RouteName));
+                // }
 
-                string VidDir = Directory.CreateDirectory(Path.Combine(Application.persistentDataPath, RouteName, "Videos")).FullName;
-                File.Move(path, VidDir + filename);
+                // string VidDir = Directory.CreateDirectory(Path.Combine(Application.persistentDataPath, RouteName, "Videos")).FullName;
+                string vidToPath = RouteFolder.GetVideoPath(filename);
+                Debug.Log("Saving video from " + path + " to " + vidToPath);
+                File.Move(path, vidToPath);
 
                 CurrentRoute.EndTimestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
                 CurrentRoute.InsertDirty();
 
-                AppLogger.Instance.LogFromMethod(this.name, "StopRecording", $"Recording successfully saved to {VidDir + filename}");
+                AppLogger.Instance.LogFromMethod(this.name, "StopRecording", $"Recording successfully saved to {vidToPath}.");
             }
             catch (Exception e)
             {
@@ -348,19 +355,28 @@ public class PhoneCam : MonoBehaviour
         //Debug.Log(Application.persistentDataPath);
     }
 
-
+    /// <summary>
+    /// Cancels the recording and deletes the recorded files
+    /// </summary>
     public async void CancelRecording()
     {
         try
         {
             AppLogger.Instance.LogFromMethod(this.name, "CancelRecording", $"Cancelling recording.");
-            AppState.recording = false;
+            if (AppState.ERW.recording)
+            {
+                AppState.ERW.recording = false;
 
-            string ImgDir = Path.Combine(Application.persistentDataPath, RouteName, "Fotos");
-            Directory.Delete(ImgDir, true);
+                var VidPath = await recorder.FinishWriting();
+                File.Delete(VidPath);                                
+            }
+            // string ImgDir = Path.Combine(Application.persistentDataPath, RouteName, "Fotos");
+            // if (Directory.Exists(ImgDir)){
+            //     Directory.Delete(ImgDir, true);
+            // }    
 
-            var VidPath = await recorder.FinishWriting();
-            File.Delete(VidPath);
+            RouteFolder.DeleteFolder();        
+
             AppLogger.Instance.LogFromMethod(this.name, "CancelRecording", $"Cancelling done.");
         }
         catch (Exception e)
@@ -370,20 +386,33 @@ public class PhoneCam : MonoBehaviour
 
     }
 
-    private Color32[] rotatedPixelBuffer;
-    public async void TakePicture(string filename)
-    {
-        if (AppState.recording)
+
+    private Color32[] rotatedPixelBuffer; // buffer for rotated pixels
+    /// <summary>
+    /// Takes a picture and saves it to the device
+    /// </summary>
+    /// <param name="filename">The filename of the picture.</param>
+    /// <param name="forceBeforeRecordingStart">If true, the picture is taken before the recording starts.</param>
+    public async void TakePicture(string filename, bool forceBeforeRecordingStart = false)
+    {        
+        // if we are forcing this before the start, we need to capture the pixel buffer
+        if (forceBeforeRecordingStart){
+            pixelBuffer = webCamTexture.GetPixels32();
+            rotatedPixelBuffer = webCamTexture.GetPixels32();
+            webCamTexture.GetPixels32(pixelBuffer);
+        }
+
+        if (AppState.ERW.recording || forceBeforeRecordingStart)
         {
             try
             {
                 AppLogger.Instance.LogFromMethod(this.name, "TakePicture", "Capturing picture.");
 
-                string ImgDir = Path.Combine(Application.persistentDataPath, RouteName, "Fotos");
-                if (!Directory.Exists(ImgDir))
-                {
-                    Directory.CreateDirectory(ImgDir);
-                }
+                // string ImgDir = Path.Combine(Application.persistentDataPath, RouteName, "Fotos");
+                // if (!Directory.Exists(ImgDir))
+                // {
+                //     Directory.CreateDirectory(ImgDir);
+                // }
 
                 JPGRecorder rec = new JPGRecorder(webCamTexture.requestedWidth, webCamTexture.requestedHeight);
                 RotatePixelBuffer(pixelBuffer, rotatedPixelBuffer);
@@ -394,35 +423,48 @@ public class PhoneCam : MonoBehaviour
                 string[] split = path.Split('/');
                 //string filename = split[split.Length - 1]+".jpg";
                 string[] fotos = Directory.GetFiles(path);
+
+                //string fullPath = Path.Combine(ImgDir, filename);
+                string fullPath = RouteFolder.GetPicturePath(filename);
+
                 foreach (string foto in fotos)
                 {
-                    File.Move(foto, Path.Combine(ImgDir, filename));
+                    File.Move(foto, fullPath);
                 }
-                Debug.LogWarning(path);
+                //Debug.LogWarning(path);
                 Directory.Delete(path, true);
+              
+                OnPictureTakenReady?.Invoke(true); // successful
+                AppLogger.Instance.LogFromMethod(this.name, "TakePicture", $"Picture captured and saved to: {fullPath}.");                
 
-                AppLogger.Instance.LogFromMethod(this.name, "TakePicture", $"Picture captured and saved to: {path}.");
             }
             catch (Exception e)
             {
                 FatalError("TakePicture","Error taking picture.", e);
+                OnPictureTakenReady?.Invoke(false); // unsuccessful
             }
         }
     }
 
+    /// <summary>
+    /// Gets the current recording time in seconds.
+    /// </summary>
     public double GetCurrentPlaybackTimeSeconds()
     {
-        return (double)clock.timestamp / 1_000_000_000.0;
+        return  clock == null? 0 : (double)clock.timestamp / 1_000_000_000.0 ;
     }
 
+    /// <summary>
+    ///  Pauses or resumes the recording
+    /// </summary>
     public void TogglePause()
     {
         try
         {
-            AppLogger.Instance.LogFromMethod(this.name, "TogglePause", $"Pausing the recording from {AppState.pausedRec} to {!AppState.pausedRec}.");
+            AppLogger.Instance.LogFromMethod(this.name, "TogglePause", $"Pausing the recording from {AppState.ERW.pausedRec} to {!AppState.ERW.pausedRec}.");
 
             clock.paused = !clock.paused;
-            AppState.pausedRec = !AppState.pausedRec;
+            AppState.ERW.pausedRec = !AppState.ERW.pausedRec;
             if (clock.paused)
             {
                 audioInput?.Dispose();
@@ -434,7 +476,7 @@ public class PhoneCam : MonoBehaviour
                 microphoneSource.mute = audioInput == null;
             }
 
-            RecordingInfo.PauseUpdate(AppState.pausedRec);
+            RecordingInfo.PauseUpdate(AppState.ERW.pausedRec);
 
             AppLogger.Instance.LogFromMethod(this.name, "TogglePause", "Pausing toggle successful.");
 
@@ -447,11 +489,18 @@ public class PhoneCam : MonoBehaviour
     }
 
 
-    private void FatalError(string method, string appMessage, Exception exception)
+    /// <summary>
+    /// Logs a fatal error and stops the recording
+    /// </summary>
+    /// <param name="method"></param>
+    /// <param name="appMessage"></param>
+    /// <param name="exception"></param>
+    public void FatalError(string method, string appMessage, Exception exception, string className = null)
     {
         var trace = exception != null? exception.StackTrace : null;
 
-        AppLogger.Instance.ErrorFromMethod(this.name, method, appMessage + " StackTrace: " + trace);
+        className = className ?? this.name;
+        AppLogger.Instance.ErrorFromMethod(className, method, appMessage + " StackTrace: " + trace);
 
         Debug.Log(appMessage);
         if (trace!= null)
@@ -462,20 +511,11 @@ public class PhoneCam : MonoBehaviour
         OnRecordingError?.Invoke(appMessage);
     }
 
-    //private void RotatePixelBuffer(Color32[] input, Color32[] output)
-    //{
-    //    int width = webCamTexture.width;
-    //    int height = webCamTexture.height;
-
-    //    for (int y = 0; y < height; y++)
-    //    {
-    //        for (int x = 0; x < width; x++)
-    //        {
-    //            output[x * height + (height - y - 1)] = input[y * width + x];
-    //        }
-    //    }
-    //}
-
+    /// <summary>
+    /// Rotates the pixel buffer.
+    /// </summary>
+    /// <param name="input">The input pixel buffer.</param>
+    /// <param name="output">The output pixel buffer.</param>
     private void RotatePixelBuffer(Color32[] input, Color32[] output)
     {
         int width = webCamTexture.width;
@@ -493,6 +533,29 @@ public class PhoneCam : MonoBehaviour
         }
     }
 
+    private void OnDestroy()
+    {
+        if (microphoneSource != null)
+        {
+            // Stop microphone
+            microphoneSource.Stop();
+            Microphone.End(null);
+        }
 
+        if (webCamTexture != null)
+        {
+            webCamTexture.Stop();
+            Destroy(CamBackground.texture);
+            webCamTexture = null;
+        }
+    }
+
+    private void OnApplicationQuit()
+    {
+        if (AppState.ERW.recording)
+        {
+            CancelRecording();
+        }
+    }
 
 }

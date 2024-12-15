@@ -271,24 +271,32 @@ public class AudioInstruction : MonoBehaviour
     }
 
     // private utils
-    private void PlaySound(AudioClip clip)
+    protected void PlaySound(AudioClip clip)
     {
         AddToQueue(clip, false);
     }
 
-    private void PlaySound(string filename)
+    protected void PlaySound(string filename)
     {
-        //Debug.Log(filename);
 
-        //if (audioSource.clip != null)
-        //{
-        //    audioSource.clip.UnloadAudioData();
-        //}
+        // AudioClip clip = Resources.Load<AudioClip>("v2/Sounds/Instruction_" + filename);
+        // if (clip != null)
+        // {
+        //     AddToQueue(clip, true);         
+        // }
+        // else
+        // {
+        //     Debug.LogError("Audio clip not found: " + filename);
+        // }
+        PlaySound(filename, "v2/Sounds/Training/Instruction_");
+    }
 
-        AudioClip clip = Resources.Load<AudioClip>("v2/Sounds/Instruction_" + filename);
+    protected void PlaySound(string filename, string basePath)
+    {
+        AudioClip clip = Resources.Load<AudioClip>(basePath + filename);
         if (clip != null)
         {
-            AddToQueue(clip, true);         
+            AddToQueue(clip, true);
         }
         else
         {
@@ -297,7 +305,7 @@ public class AudioInstruction : MonoBehaviour
     }
 
 
-    private void AddToQueue(AudioClip clip, bool freeUp)
+    protected void AddToQueue(AudioClip clip, bool freeUp)
     {
         if (clip != null)
         {
@@ -305,7 +313,7 @@ public class AudioInstruction : MonoBehaviour
         }
     }
 
-    private void PlayNextSound()
+    protected void PlayNextSound()
     {
         (AudioClip clip, bool freeUp) = soundQueue.Dequeue();
         if (clip != null)
@@ -326,7 +334,7 @@ public class AudioInstruction : MonoBehaviour
         }
     }
 
-    private IEnumerator WaitForSoundCompletion()
+    protected IEnumerator WaitForSoundCompletion()
     {
         // let's wait a for a moment before checking.
         yield return new WaitForSeconds(0.3f);

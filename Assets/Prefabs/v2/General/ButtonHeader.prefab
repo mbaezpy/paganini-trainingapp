@@ -490,9 +490,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   imageObject: {fileID: 0}
   textObject: {fileID: 0}
+  pressedColor: {r: 0, g: 0, b: 0, a: 1}
   Wrapper: {fileID: 7964652094081423721}
   ClickBackground: {fileID: 0}
-  pressedColor: {r: 0, g: 0, b: 0, a: 1}
+  scaleReduction: 0.9
 --- !u!114 &4479036881781029959
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -534,7 +535,7 @@ MonoBehaviour:
             m_StringArgument: 
             m_BoolArgument: 1
           m_CallState: 2
-        - m_Target: {fileID: 3769746247362314422}
+        - m_Target: {fileID: 4784210187687223142}
           m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
           m_MethodName: SetActive
           m_Mode: 6
@@ -544,7 +545,7 @@ MonoBehaviour:
             m_IntArgument: 0
             m_FloatArgument: 0
             m_StringArgument: 
-            m_BoolArgument: 0
+            m_BoolArgument: 1
           m_CallState: 2
   - eventID: 2
     callback:
@@ -574,7 +575,7 @@ MonoBehaviour:
             m_StringArgument: 
             m_BoolArgument: 0
           m_CallState: 2
-        - m_Target: {fileID: 3769746247362314422}
+        - m_Target: {fileID: 4784210187687223142}
           m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
           m_MethodName: SetActive
           m_Mode: 6
@@ -584,7 +585,7 @@ MonoBehaviour:
             m_IntArgument: 0
             m_FloatArgument: 0
             m_StringArgument: 
-            m_BoolArgument: 1
+            m_BoolArgument: 0
           m_CallState: 2
 --- !u!1 &4784210187687223142
 GameObject:

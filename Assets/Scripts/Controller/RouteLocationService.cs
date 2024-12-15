@@ -53,9 +53,11 @@ public class RouteLocationService : MonoBehaviour
     /// <summary>
     /// Starts tracking the device's location.
     /// </summary>
-    public void StartTracking()
+    public void InitialiseTracking()
     {
         AppLogger.Instance.LogFromMethod(this.name, "StartTracking", "Checking permissions");
+
+        Pathpoint.DeleteFromRoute(AppState.ERW.CurrentRoute.Id, null, null);
 
 #if UNITY_ANDROID
         if (!Permission.HasUserAuthorizedPermission(Permission.FineLocation))
@@ -69,6 +71,10 @@ public class RouteLocationService : MonoBehaviour
         StartCoroutine(StartLocationService());
     }
 
+    /// <summary>
+    /// Starts the location tracking service on the background, waiting for the location service to initialise.
+    /// </summary>
+    /// <returns></returns>
     private IEnumerator StartLocationService()
     {
         AppLogger.Instance.LogFromMethod(this.name, "StartLocationService", "Starting location tracking");
@@ -105,8 +111,8 @@ public class RouteLocationService : MonoBehaviour
         OnLocationTrackingStarted.Invoke();
     }
 
-
-    private double last = 0;
+    
+    private double last = 0;  // last timestamp
     /// <summary>
     /// Continuously updates the GPS location and logs it to the database while recording.
     /// </summary>
@@ -116,14 +122,14 @@ public class RouteLocationService : MonoBehaviour
         if (!this.running) return;
         //check if tracking mode is running        
 
-        if (AppState.recording && !AppState.pausedRec && UnityEngine.Input.location.status != LocationServiceStatus.Running)
+        if (AppState.ERW.recording && !AppState.ERW.pausedRec && UnityEngine.Input.location.status != LocationServiceStatus.Running)
         {
             // Problems with GPS
             RecordingInfo.UpdateGPSStatus(RecordingStatus.RunningStatus.Error, 0);
             FatalError("Update","Location tracking is not running.", null);
             return;
         }
-        if (AppState.recording && !AppState.pausedRec && !UnityEngine.Input.location.isEnabledByUser)
+        if (AppState.ERW.recording && !AppState.ERW.pausedRec && !UnityEngine.Input.location.isEnabledByUser)
         {
             // Problems with GPS
             RecordingInfo.UpdateGPSStatus(RecordingStatus.RunningStatus.Error, 0);
@@ -144,13 +150,10 @@ public class RouteLocationService : MonoBehaviour
         last = UnityEngine.Input.location.lastData.timestamp;
 
         //punkt in db schreiben
-        if (AppState.recording&&!AppState.pausedRec)
+        if (AppState.ERW.recording&&!AppState.ERW.pausedRec)
         {
             var pathpoint = GetCurrentPathpoint();
             pathpoint.InsertDirty();
-
-            //DBConnector.Instance.GetConnection().Insert();
-            //count = DBConnector.Instance.GetConnection().Query<Pathpoint>("SELECT * FROM Pathpoint where RouteId=?", AppState.SelectedBegehung.ToString()).Count;
 
             RecordingInfo.UpdateGPSStatus(RecordingStatus.RunningStatus.Active, (float)pathpoint.Accuracy);
         }
@@ -161,18 +164,19 @@ public class RouteLocationService : MonoBehaviour
     /// Creates a new path point using the current GPS location.
     /// </summary>
     /// <returns>A new path point object with the current GPS location information.</returns>
-    private Pathpoint GetCurrentPathpoint()
+    public Pathpoint GetCurrentPathpoint()
     {
         Debug.Log("GetCurrentPathpoint: Getting new Pathpoint");
         Pathpoint punkt = new Pathpoint
         {
-            RouteId = AppState.SelectedBegehung,            
+            RouteId = AppState.ERW.CurrentRoute.Id,            
             Longitude = UnityEngine.Input.location.lastData.longitude,
             Latitude = UnityEngine.Input.location.lastData.latitude,
             Altitude = UnityEngine.Input.location.lastData.altitude,
             Accuracy = UnityEngine.Input.location.lastData.horizontalAccuracy,
             POIType = Pathpoint.POIsType.Point,
-            Timestamp = System.DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+            Timestamp = DateUtils.UTCMilliseconds(),
+            TimeInVideo = PhoneCam.GetCurrentPlaybackTimeSeconds(),
             FromAPI = false,
             IsDirty = true,
             Description = ""
@@ -202,8 +206,6 @@ public class RouteLocationService : MonoBehaviour
         poi.POIType = (Pathpoint.POIsType)poiType;
 
         poi.InsertDirty();
-
-        //DBConnector.Instance.GetConnection().Insert(poi);
     }
 
     /// <summary>
@@ -225,6 +227,7 @@ public class RouteLocationService : MonoBehaviour
 
             AppLogger.Instance.LogFromMethod(this.name, "MarkPOIPhoto", $"Pathpoint inserted [{currentLocation.Latitude} {currentLocation.Longitude} {currentLocation.Accuracy}] ts {currentLocation.Timestamp}");
 
+            // this will take the picture and save it to the file system, async
             PhoneCam.TakePicture(currentLocation.PhotoFilename);
         }
         catch (Exception e)
@@ -237,11 +240,9 @@ public class RouteLocationService : MonoBehaviour
     /// <summary>
     /// Restarts or starts the GPS tracking service for the current route.
     /// </summary>
-    public void RestartTracking()
+    public void StartTracking()
     {
-        AppLogger.Instance.LogFromMethod(this.name, "RestartTracking", "Restarting/Starting GPS tracking for current route");
-        Pathpoint.DeleteFromRoute(AppState.SelectedBegehung, null, null);        
-      
+        AppLogger.Instance.LogFromMethod(this.name, "RestartTracking", "Restarting/Starting GPS tracking for current route");                
         this.running = true;      
     }
 

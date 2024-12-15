@@ -8,7 +8,7 @@ using UnityEngine.Events;
 
 
 [System.Serializable]
-public class WayEvent : UnityEvent<Way>
+public class WayEvent : UnityEvent<Way,Route>
 {
 }
 
@@ -28,6 +28,11 @@ public class WayItem : MonoBehaviour
     [Header(@"Route")]
     public TMPro.TMP_Text routeName;
     public TMPro.TMP_Text recordingDate;
+    public TMPro.TMP_Text recordingFailed;
+
+    [Header(@"Route export attributes")]
+    public TMPro.TMP_Text exportedStatus;
+    public GameObject localStatusFlag;        
 
     [Header(@"Other")]
     public Button selectionButton;
@@ -38,6 +43,7 @@ public class WayItem : MonoBehaviour
     public WayEvent OnSelected;
 
     private Way way;
+    private Route route;
 
     void Awake()
     {
@@ -48,7 +54,17 @@ public class WayItem : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        selectionButton.onClick.AddListener(WaySelected);        
+        
+        var buttonPrefab = gameObject.GetComponent<ButtonPrefab>();
+        if (buttonPrefab != null)
+        {
+            buttonPrefab.OnProperClick.AddListener(WaySelected);
+        }
+        else 
+        {
+            selectionButton.onClick.AddListener(WaySelected);        
+        }
+        
     }
 
     // Update is called once per frame
@@ -65,15 +81,39 @@ public class WayItem : MonoBehaviour
 
     public void FillWayItem(Way w, Route route)
     {
-        if (routeName) = ToCapitalFirst(w.Destination);
-
+        if (routeName!=null) routeName.text = ToCapitalFirst(route.Name);
         if (startName!= null) startName.text = ToCapitalFirst(w.Start);;
         if (destinationName != null) destinationName.text = ToCapitalFirst(w.Destination);
 
         startLandmark?.SetSelectedLandmark(Int32.Parse(w.StartType)); //selectedLandmarkType = (LandmarkIcon.LandmarkType) Int32.Parse(w.StartType);
         destinationLandmark?.SetSelectedLandmark(Int32.Parse(w.DestinationType)); //(LandmarkIcon.LandmarkType)Int32.Parse(w.DestinationType);
 
+        if (recordingDate != null) {
+            // flags based on wether the route is local or not
+            
+            exportedStatus.gameObject.SetActive(route.FromAPI);
+            localStatusFlag.SetActive(!route.FromAPI);
+
+            if (!route.FromAPI) {                
+                bool failed = true;
+                if (route.StartTimestamp != null && route.StartTimestamp > 0)
+                {
+                    failed = false;
+                    recordingDate.text =  DateUtils.ConvertMillisecondsToLocalString(route.StartTimestamp, dateFormat: "HH:mm 'Uhr' dd.MM.yyyy ");
+                }
+
+                recordingDate.gameObject.SetActive(!failed);
+                recordingFailed.gameObject.SetActive(failed);                
+
+            }
+                
+        }
+
+
         this.way = w;
+        this.route = route;
+
+        RenderLoading(false);
     }
 
     public void FillWayDestination(Way w, Route route)
@@ -87,6 +127,7 @@ public class WayItem : MonoBehaviour
             RenderPicture(DestinationPhoto, route.PhotoDestination);
 
         this.way = w;
+        this.route = route;
 
         RenderLoading(false);
     }
@@ -101,7 +142,7 @@ public class WayItem : MonoBehaviour
         Debug.Log("Way selected, id: " + way.Id);
         if (OnSelected != null)
         {
-            OnSelected.Invoke(way);
+            OnSelected.Invoke(way, route);
         }
     }
 
@@ -131,21 +172,4 @@ public class WayItem : MonoBehaviour
         }
     }
 
-    //public void StartButtonOnClick(Button selectedGameObject)
-    //{
-    //    var selectedItem = selectedGameObject.transform.parent;
-    //    this.OnClick(int.Parse(selectedItem.name));
-
-    //}
-    //public void ListElementOnClick(Button selectedGameObject)
-    //{
-    //    var selectedItem = selectedGameObject.transform.parent;
-    //    this.OnClick(int.Parse(selectedItem.name));
-    //}
-
-    //public void OnClick(int wegeId)
-    //{
-    //    AppState.SelectedWeg = wegeId;
-    //    SceneManager.LoadScene(AppState.allOkScene);
-    //}
 }

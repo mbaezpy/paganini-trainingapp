@@ -63,22 +63,15 @@ public class SceneSwitcher : MonoBehaviour
 
     public void CancelRecordingAndGoMyExploratoryRouteWalk()
     {
-        Route.Delete(AppState.SelectedWeg);
-        Pathpoint.DeleteFromRoute(AppState.SelectedWeg, null, null);
+        Route.Delete(AppState.ERW.CurrentRoute.Id);
+        Pathpoint.DeleteFromRoute(AppState.ERW.CurrentRoute.Id, null, null);
 
         // We delete the way if it's local
-        var way = Way.Get(AppState.SelectedWeg);
+        var way = Way.Get(AppState.ERW.CurrentWay.Id);
         if (!way.FromAPI)
         {
             Way.Delete(way.Id);
         }
-
-        //DBConnector.Instance.GetConnection().Execute("DELETE FROM ExploratoryRouteWalk where Id=" + AppState.SelectedWeg);
-
-        //DBConnector.Instance.GetConnection().Execute("DELETE FROM Pathpoint where Erw_id=" + AppState.SelectedWeg);
-
-        //// We delete the way if it's local
-        //DBConnector.Instance.GetConnection().Execute("DELETE FROM Way where Id=" + AppState.SelectedWeg + " and status = " + (int) Way.WayStatus.Local);
 
         GotoMyExploratoryRouteWalk();
     }
