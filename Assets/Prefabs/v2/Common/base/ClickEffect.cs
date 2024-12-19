@@ -27,7 +27,7 @@ public class ClickEffect : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     [Tooltip("Vibrate the phone when the button is pressed")]
     public bool VibrateOnPressed = true;     
 
-    private Vector3 originalScale;   // Original scale of the GameObject.
+    private Vector3? originalScale;   // Original scale of the GameObject.
     private Color? originalImageColor; // Original color of the Image.
     private Color? originalTextColor;  // Original color of the Text.
 
@@ -36,19 +36,18 @@ public class ClickEffect : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 
     private void Start()
     {
-        // Store the original scale and colors.
-        originalScale = Wrapper.transform.localScale;
-        originalImageColor = imageObject?.color;
-        originalTextColor = textObject?.color;
-
         button = GetComponent<Button>();
+
+        originalScale = Wrapper?.transform.localScale;
+        originalImageColor = imageObject?.color;
+        originalTextColor = textObject?.color;        
     }
 
     public void OnPointerDown(PointerEventData eventData)
     {
-        if (button != null && !button.interactable) return;
+        if (button == null || !button.interactable) return;
         // Apply the click effect when the GameObject is pressed.
-        Wrapper.transform.localScale = originalScale * scaleReduction;
+        if (Wrapper != null) Wrapper.transform.localScale = originalScale.Value * scaleReduction;
         if (imageObject!= null) imageObject.color = pressedColor;
         if (textObject != null) textObject.color = pressedColor;
 
@@ -57,9 +56,9 @@ public class ClickEffect : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 
     public void OnPointerUp(PointerEventData eventData)
     {
-        if (button != null && !button.interactable) return;
+        if (button == null || !button.interactable) return;
         // Reset to the original scale and colors when the click is released.
-        Wrapper.transform.localScale = originalScale;
+        if (Wrapper != null) Wrapper.transform.localScale = originalScale.Value;
         if (imageObject != null) imageObject.color = (Color)originalImageColor;
         if (textObject != null)  textObject.color = (Color)originalTextColor;
 
@@ -68,6 +67,10 @@ public class ClickEffect : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        if (VibrateOnPressed) HapticUtils.VibrateForClick();
+        bool doVibrate = true;
+        if (button != null && !button.interactable) {
+            doVibrate = false;
+        }
+        if (VibrateOnPressed && doVibrate) HapticUtils.VibrateForClick();
     }
 }

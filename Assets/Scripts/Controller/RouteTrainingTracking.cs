@@ -38,6 +38,9 @@ public class RouteTrainingTracking : MonoBehaviour
     {        
         CurrentRoute = route;
 
+        // already running?
+        if (running) return;
+
         if (!RunSimulation)
         {
             StartCoroutine(StartLocationService());

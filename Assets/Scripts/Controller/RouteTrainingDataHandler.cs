@@ -42,10 +42,12 @@ public class RouteTrainingDataHandler : MonoBehaviour
         PaganiniRestAPI.Way.GetAll(GetWaySucceed, GetWegeFailed);
     }
 
-    public void SetSelectedWay(Way w)
+    public void SetSelectedWay(Way w, Route r)
     {
-        SessionData.Instance.SaveData("SelectedRoute", w.Routes[0]);
-        selectedRoute = w.Routes[0];
+        // SessionData.Instance.SaveData("SelectedRoute", w.Routes[0]);
+        // selectedRoute = w.Routes[0];
+        SessionData.Instance.SaveData("SelectedRoute", r);
+        selectedRoute = r;        
     }
 
 

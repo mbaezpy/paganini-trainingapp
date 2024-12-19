@@ -206,6 +206,7 @@ GameObject:
   - component: {fileID: 1087341162008089822}
   - component: {fileID: 7614495293608305686}
   - component: {fileID: 521316776651981290}
+  - component: {fileID: 3235623469500531102}
   m_Layer: 5
   m_Name: PictureToggle
   m_TagString: Untagged
@@ -369,6 +370,25 @@ MonoBehaviour:
   FeedbackGroup: {fileID: 6498957758073016385}
   FeedbackOK: {fileID: 9716213851394649}
   FeedbackWrong: {fileID: 3305704147391999789}
+--- !u!114 &3235623469500531102
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1087341162008089820}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ba046b7ce4ff4e2c8de99aec88e62f9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  imageObject: {fileID: 0}
+  textObject: {fileID: 0}
+  pressedColor: {r: 0, g: 0, b: 0, a: 1}
+  Wrapper: {fileID: 0}
+  ClickBackground: {fileID: 0}
+  scaleReduction: 0.95
+  VibrateOnPressed: 1
 --- !u!1 &1087341162432008177
 GameObject:
   m_ObjectHideFlags: 0

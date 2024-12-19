@@ -55,6 +55,8 @@ public class GameButton : MonoBehaviour
 
         isPressed = !isPressed; // Toggle the state
         SetButtonState(isPressed); // Apply the new state
+
+        HapticUtils.VibrateForClick();
     }
 
     // Function to set the button state based on the given parameter

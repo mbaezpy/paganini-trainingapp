@@ -168,6 +168,7 @@ GameObject:
   - component: {fileID: 4578687558448692305}
   - component: {fileID: 1077141381921858390}
   - component: {fileID: 8223929618127466569}
+  - component: {fileID: 4662910758931767927}
   m_Layer: 5
   m_Name: ButtonIcon
   m_TagString: Untagged
@@ -392,6 +393,25 @@ MonoBehaviour:
             m_StringArgument: 
             m_BoolArgument: 0
           m_CallState: 2
+--- !u!114 &4662910758931767927
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4989675101775813744}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ba046b7ce4ff4e2c8de99aec88e62f9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  imageObject: {fileID: 0}
+  textObject: {fileID: 0}
+  pressedColor: {r: 0, g: 0, b: 0, a: 1}
+  Wrapper: {fileID: 0}
+  ClickBackground: {fileID: 0}
+  scaleReduction: 0.95
+  VibrateOnPressed: 1
 --- !u!1001 &1762628186371704168
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -955,6 +955,7 @@ GameObject:
   - component: {fileID: 6712308772964808701}
   - component: {fileID: 6581883465039942651}
   - component: {fileID: 4870371236306016994}
+  - component: {fileID: 1827998127175061886}
   m_Layer: 5
   m_Name: ButtonIconWLabel
   m_TagString: Untagged
@@ -1110,6 +1111,25 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_IsOn: 0
+--- !u!114 &1827998127175061886
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7409592093528590794}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ba046b7ce4ff4e2c8de99aec88e62f9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  imageObject: {fileID: 0}
+  textObject: {fileID: 0}
+  pressedColor: {r: 0, g: 0, b: 0, a: 1}
+  Wrapper: {fileID: 7409592093528590794}
+  ClickBackground: {fileID: 0}
+  scaleReduction: 0.95
+  VibrateOnPressed: 1
 --- !u!1 &7409592093666350460
 GameObject:
   m_ObjectHideFlags: 0
@@ -1125,6 +1145,7 @@ GameObject:
   - component: {fileID: 2044651559453095261}
   - component: {fileID: 3249362183701703258}
   - component: {fileID: 8976558803991486545}
+  - component: {fileID: 9110628465032079223}
   m_Layer: 5
   m_Name: ButtonIcon
   m_TagString: Untagged
@@ -1284,6 +1305,25 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_IsOn: 0
+--- !u!114 &9110628465032079223
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7409592093666350460}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ba046b7ce4ff4e2c8de99aec88e62f9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  imageObject: {fileID: 0}
+  textObject: {fileID: 0}
+  pressedColor: {r: 0, g: 0, b: 0, a: 1}
+  Wrapper: {fileID: 7409592093666350460}
+  ClickBackground: {fileID: 0}
+  scaleReduction: 0.95
+  VibrateOnPressed: 1
 --- !u!1 &7409592094116068161
 GameObject:
   m_ObjectHideFlags: 0
@@ -1298,6 +1338,7 @@ GameObject:
   - component: {fileID: 6684423930879664568}
   - component: {fileID: 6712308773551736182}
   - component: {fileID: 6581883465526747504}
+  - component: {fileID: 575033948093728413}
   m_Layer: 5
   m_Name: ButtonIconActive
   m_TagString: Untagged
@@ -1449,6 +1490,25 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!114 &575033948093728413
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7409592094116068161}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ba046b7ce4ff4e2c8de99aec88e62f9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  imageObject: {fileID: 0}
+  textObject: {fileID: 0}
+  pressedColor: {r: 0, g: 0, b: 0, a: 1}
+  Wrapper: {fileID: 7409592094116068161}
+  ClickBackground: {fileID: 0}
+  scaleReduction: 0.95
+  VibrateOnPressed: 1
 --- !u!1001 &415822592209817573
 PrefabInstance:
   m_ObjectHideFlags: 0

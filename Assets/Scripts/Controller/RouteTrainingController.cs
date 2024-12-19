@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Linq;
 using NatSuite.Recorders.Clocks;
 using UnityEngine;
+using UnityEngine.Android;
 using UnityEngine.UI;
 
 public class RouteTrainingController : MonoBehaviour
@@ -30,7 +31,6 @@ public class RouteTrainingController : MonoBehaviour
     public GameObject HelpPanel;
 
     [Header("UI Components")]
-    public WayfindInstruction Wayfind;    
     public LocationUtilsConfig RouteValidationConfig;
     public RouteTrainingTracking RouteTracking;
     public TrainingProgressBar RouteProgressBar;
@@ -38,6 +38,7 @@ public class RouteTrainingController : MonoBehaviour
     public GPSDebug GPSDebugDisplay;
     public SocketsAPI RealTimeAPI;
     public TrackingStatus GPSTrackingStatus;
+    public PermissionManager AppPermissions;
 
     [Header("Configuration")]
     public bool UploadChachedRouteWalksEnabled;
@@ -358,8 +359,6 @@ public class RouteTrainingController : MonoBehaviour
     private void POIWatch_OnAlongTrack(object sender, ValidationArgs e)
     {
         GPSDebugDisplay.Log($"{POIWatch.CurrentPOIIndex} POIWatch_OnAlongTrack {e.SegmentInfo}");
-        //Wayfind.LoadOnTrack();
-        //LoadInstruction(POIWatch.CurrentPOIIndex);
 
         if (POIWatch.GetPreviousState() == POIWatcher.POIState.OffTrack) {
             // We are on track now, so we can show the 'Next POI' instruction again
@@ -375,10 +374,6 @@ public class RouteTrainingController : MonoBehaviour
         else if (POIWatch.GetPreviousState() == POIWatcher.POIState.LeftPOI)
         {
             LoadPOIConfirmation();
-
-            //TODO: Move sounds to instructions
-            //AuralInstruction.PlayEffectLeavePOI();
-            //HapticUtils.VibrateForNudge();
         }
 
         Debug.Log($"POIWatch_OnAlongTrack (prev {POIWatch.GetPreviousState()})");        
@@ -480,6 +475,15 @@ public class RouteTrainingController : MonoBehaviour
 
     public void StartTraining()
     {
+        ShowMainPanel(LoadingPanel);
+#if PLATFORM_ANDROID
+        // We check if we have the necessary permissions
+        if (AppPermissions != null && !Permission.HasUserAuthorizedPermission(Permission.FineLocation))
+        {
+            AppPermissions.gameObject.SetActive(true);                        
+        }        
+#endif
+
         // Download definition
         SharedData.DownloadRouteDefinition();
 
@@ -535,11 +539,14 @@ public class RouteTrainingController : MonoBehaviour
     {
         SharedData.LoadRouteFromDatabase();
 
-        LoadRoadSafety();
+        LoadRoadSafety();        
 
-        LoadStartingPoint();
-
-        LoadLocationTracking();
+        // This means permissions are granted, we can load the location tracking, and show the starting point
+        if (!AppPermissions.gameObject.activeSelf) {
+            Debug.Log("LoadTrainingComponents: AppPermissions not active, loading location tracking");
+            LoadLocationTracking();            
+            LoadStartingPoint();
+        }
 
         POIWatch.LoadTargetPOIs(SharedData.POIList);
 
@@ -550,6 +557,18 @@ public class RouteTrainingController : MonoBehaviour
         }
 
         DataInitialised = true;
+    }
+
+    public void OnPermissionGranted()
+    {
+        Debug.Log("OnPermissionGranted: Permission granted");        
+        LoadLocationTracking();
+
+        // If we finished after the data finished loading, we display the starting point
+        if (DataInitialised)
+        {
+            LoadStartingPoint();
+        }
 
     }
 

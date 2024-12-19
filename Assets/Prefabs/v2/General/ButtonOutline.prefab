@@ -357,10 +357,10 @@ MonoBehaviour:
   buttonObject: {fileID: 101788917055590723}
   fillImage: {fileID: 679159720424283206}
   fillColor: {r: 0, g: 0.039215688, b: 1, a: 1}
-  timeout: 3
   ButtonOriginalText: {fileID: 6504957679922753602}
   FilledOutTextContainer: {fileID: 3072793391930756348}
   FilledOutTextColor: {r: 1, g: 1, b: 1, a: 1}
+  Timeout: 5
 --- !u!1 &3873140738545607887
 GameObject:
   m_ObjectHideFlags: 0

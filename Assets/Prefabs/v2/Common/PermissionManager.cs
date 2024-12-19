@@ -28,6 +28,7 @@ public class PermissionManager : MonoBehaviour
 
     private int NumAvailablePermissions = 0;
     private int NumGrantedPermissions = 0;
+    private bool SetupCompleted = false;
 
 
     // Start is called before the first frame update
@@ -37,9 +38,11 @@ public class PermissionManager : MonoBehaviour
 #if PLATFORM_ANDROID
 
         NumGrantedPermissions = 0;
+        SetupCompleted = false;
         SetupPermission(PermissionButtonMicrophone, Permission.Microphone);
         SetupPermission(PermissionButtonCamera, Permission.Camera);
         SetupPermission(PermissionButtonGPS, Permission.FineLocation);
+        SetupCompleted = true;
 
         if (!AllGranted())
         {
@@ -53,6 +56,7 @@ public class PermissionManager : MonoBehaviour
         else
         {
             OnPanelCloseHandler();
+            Debug.Log("Start: All permissions granted");
         }
 #endif
 
@@ -61,6 +65,8 @@ public class PermissionManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (!SetupCompleted) return;
+
         if (AllGranted())
         {
             CloseButton.interactable = true;
@@ -77,6 +83,11 @@ public class PermissionManager : MonoBehaviour
         }
     }
 
+    public bool CheckIfPermissionGranted(string permission)
+    {
+        return Permission.HasUserAuthorizedPermission(permission);
+    }
+
     public void ClosePanel()
     {
         OnPanelCloseHandler();
@@ -90,6 +101,12 @@ public class PermissionManager : MonoBehaviour
 
     private bool SetupPermission(ButtonPrefab button, string permission)
     {
+        // no setup if we are not using this permission
+        if (button == null)
+        {
+            return false;
+        }
+
         NumAvailablePermissions++;        
 
         var granted = CheckIfGranted(button, permission);
@@ -109,9 +126,12 @@ public class PermissionManager : MonoBehaviour
     }
 
     private bool CheckIfGranted(ButtonPrefab button, string permission){
-        
+        if (button == null)
+        {
+            return false;
+        }
 
-        Debug.Log("Checking permission: " + permission + " granted: " + Permission.HasUserAuthorizedPermission(permission));
+        //Debug.Log("Checking permission: " + permission + " granted: " + Permission.HasUserAuthorizedPermission(permission));
 
         if (!Permission.HasUserAuthorizedPermission(permission))
         {
